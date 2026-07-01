@@ -10,9 +10,12 @@ import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.re
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.QueueItemJpaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -29,12 +32,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Exercises the real waiting-line query against a real Postgres. The point is to prove
  * FIFO order and that a consumed item disappears — the FOR UPDATE SKIP LOCKED behaviour
  * only exists on a real database, which is why we spin one up with Testcontainers.
+ *
+ * We boot only the persistence slice (JPA + Flyway + the queue adapter) via a small
+ * config, so the test stays focused and doesn't need the rest of the application wired.
  */
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(WaitingQueueAdapter.class)
+@SpringBootTest(classes = WaitingQueuePersistenceIT.PersistenceTestConfig.class)
 @Testcontainers
 class WaitingQueuePersistenceIT {
+
+    @Configuration
+    @EnableAutoConfiguration
+    @EntityScan(basePackageClasses = InteractionJpaEntity.class)
+    @EnableJpaRepositories(basePackageClasses = QueueItemJpaRepository.class)
+    @Import(WaitingQueueAdapter.class)
+    static class PersistenceTestConfig {
+    }
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
