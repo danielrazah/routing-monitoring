@@ -1,5 +1,11 @@
+const STATES = {
+  connected: { dot: 'bg-emerald-400 animate-pulse', label: 'Live' },
+  offline: { dot: 'bg-amber-400', label: 'Polling' },
+  connecting: { dot: 'bg-slate-600', label: 'Connecting…' },
+}
+
 export default function Header({ status }) {
-  const connected = status === 'connected'
+  const state = STATES[status] ?? STATES.connecting
   return (
     <header className="flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -12,8 +18,8 @@ export default function Header({ status }) {
         </div>
       </div>
       <div className="flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1.5 text-sm ring-1 ring-slate-800">
-        <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-        <span className="text-slate-300">{connected ? 'Live' : 'Connecting…'}</span>
+        <span className={`h-2.5 w-2.5 rounded-full ${state.dot}`} />
+        <span className="text-slate-300">{state.label}</span>
       </div>
     </header>
   )
