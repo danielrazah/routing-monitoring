@@ -4,6 +4,22 @@ Resumo curto do que foi escolhido e por quê. O sistema distribui atendimentos e
 times (Cartões, Empréstimos, Outros): cada atendente cuida de no máximo 3 ao mesmo
 tempo e, quando o time lota, o cliente espera numa fila e entra assim que abre uma vaga.
 
+## Stack: Java 21, Gradle e Spring Boot 4.1
+
+- **Java 21 (LTS).** É a versão de suporte longo atual. Traz as *virtual threads* que usamos
+  para escalar chamadas bloqueantes de forma barata, e recursos como `record`, `sealed` e
+  *pattern matching* em `switch` — que deixam o domínio (eventos, resultados) enxuto e
+  seguro, sem código repetitivo.
+
+- **Gradle em vez de Maven.** Build em Kotlin DSL (tipado, com autocomplete na IDE), mais
+  conciso que o XML do Maven e mais rápido no dia a dia (build incremental e cache). É
+  também o padrão do Spring Initializr.
+
+- **Spring Boot 4.1.** Versão mais recente, sobre o Spring Framework 7. É modular — cada
+  recurso é um *starter* próprio, então o app só carrega o que usa — e tem suporte nativo a
+  virtual threads e a Problem Details (RFC 9457), ambos aproveitados aqui. Por ser novo,
+  exigiu alguns ajustes de dependência (ver *Compatibilidade Spring Boot 4.1*, no fim).
+
 ## Idioma
 
 - **Código e comentários em inglês** (padrão de mercado, facilita colaboração).
