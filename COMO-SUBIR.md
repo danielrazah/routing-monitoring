@@ -1,0 +1,83 @@
+# Como subir o projeto
+
+Monorepo com três peças: banco, backend (Spring Boot) e frontend (React). Tudo sobe
+com um comando via Docker Compose.
+
+## Estrutura
+
+```
+.
+├── routing-monitoring/      # backend — Spring Boot 4.1 / Java 21
+├── fe-routing-monitoring/   # frontend — React + Vite + Tailwind
+└── docker-compose.yml       # sobe banco + backend + frontend juntos
+```
+
+## Pré-requisitos
+
+- Docker e Docker Compose.
+- Só isso: o backend e o frontend são compilados dentro dos próprios containers.
+
+## Subir tudo
+
+Na raiz do projeto:
+
+```bash
+docker compose up --build
+```
+
+A primeira vez demora alguns minutos (baixa dependências dentro dos containers).
+
+| Serviço   | URL                              |
+|-----------|----------------------------------|
+| Dashboard | http://localhost:5173            |
+| API       | http://localhost:8080/api        |
+| Health    | http://localhost:8080/actuator/health |
+| Postgres  | localhost:5432 (`routing` / `routing`) |
+
+## Testar rapidamente
+
+1. Abra o dashboard em http://localhost:5173.
+2. No formulário **Novo atendimento**, crie vários contatos do mesmo assunto
+   (ex.: *Contratação de empréstimo*, que vai para o time Empréstimos com 1 atendente).
+3. Os 3 primeiros ocupam o atendente; a partir do 4º entram na **fila**.
+4. Clique em **Atender próximo** no card do time para liberar uma vaga e puxar o
+   próximo da fila.
+
+Pelo terminal, o mesmo fluxo:
+
+```bash
+# criar um atendimento
+curl -X POST http://localhost:8080/api/interactions \
+  -H 'Content-Type: application/json' \
+  -d '{"customerName":"Maria","subject":"LOAN_CONTRACTING"}'
+
+# adiantar a fila de um time (libera uma vaga)
+curl -X POST http://localhost:8080/api/teams/{teamId}/advance-queue
+```
+
+> O idioma do dashboard segue o idioma do navegador (pt ou en).
+
+## Parar
+
+```bash
+docker compose down       # para os containers
+docker compose down -v    # também apaga os dados do Postgres
+```
+
+## Rodar sem Docker (opcional)
+
+**Backend** (precisa de JDK 21 e um Postgres em `localhost:5432`):
+
+```bash
+cd routing-monitoring
+./gradlew bootRun        # sobe a API
+./gradlew test           # testes (o de integração usa Testcontainers + Docker)
+```
+
+**Frontend** (precisa de Node 20):
+
+```bash
+cd fe-routing-monitoring
+npm install
+npm run dev              # dev server em http://localhost:5173, com proxy para o backend
+```
