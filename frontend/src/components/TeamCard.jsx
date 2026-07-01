@@ -1,9 +1,21 @@
+import { useState } from 'react'
 import CapacityMeter from './CapacityMeter.jsx'
 import { t, tv } from '../lib/i18n.js'
 
-export default function TeamCard({ team }) {
+export default function TeamCard({ team, onServeNext }) {
   const totalLoad = team.agents.reduce((sum, a) => sum + a.currentLoad, 0)
   const totalCapacity = team.agents.reduce((sum, a) => sum + a.maxConcurrent, 0)
+  const [busy, setBusy] = useState(false)
+  const hasQueue = team.waiting > 0
+
+  async function serveNext() {
+    setBusy(true)
+    try {
+      await onServeNext(team.id)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <div className="rounded-2xl bg-slate-900/70 p-5 ring-1 ring-slate-800 backdrop-blur transition hover:ring-slate-700">
@@ -33,6 +45,15 @@ export default function TeamCard({ team }) {
           </li>
         ))}
       </ul>
+
+      <button
+        onClick={serveNext}
+        disabled={!hasQueue || busy}
+        title={t('teams.serveNextHint')}
+        className="mt-4 w-full rounded-xl bg-slate-800/80 px-4 py-2 text-sm font-medium text-teal-300 ring-1 ring-slate-700 transition hover:bg-slate-800 hover:text-teal-200 disabled:cursor-not-allowed disabled:text-slate-500 disabled:ring-slate-800 disabled:hover:bg-slate-800/80"
+      >
+        {t('teams.serveNext')}
+      </button>
     </div>
   )
 }
