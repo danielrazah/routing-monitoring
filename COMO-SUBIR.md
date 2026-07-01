@@ -29,14 +29,14 @@ A primeira vez demora alguns minutos (baixa dependências dentro dos containers)
 
 | Serviço   | URL                              |
 |-----------|----------------------------------|
-| Dashboard | http://localhost:5173            |
+| Dashboard | http://localhost:8090            |
 | API       | http://localhost:8080/api        |
 | Health    | http://localhost:8080/actuator/health |
 | Postgres  | localhost:5432 (`routing` / `routing`) |
 
 ## Testar rapidamente
 
-1. Abra o dashboard em http://localhost:5173.
+1. Abra o dashboard em http://localhost:8090.
 2. No formulário **Novo atendimento**, crie vários contatos do mesmo assunto
    (ex.: *Contratação de empréstimo*, que vai para o time Empréstimos com 1 atendente).
 3. Os 3 primeiros ocupam o atendente; a partir do 4º entram na **fila**.
@@ -79,5 +79,5 @@ cd routing-monitoring
 ```bash
 cd fe-routing-monitoring
 npm install
-npm run dev              # dev server em http://localhost:5173, com proxy para o backend
+npm run dev              # dev server em http://localhost:8090, com proxy para o backend
 ```

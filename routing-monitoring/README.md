@@ -19,7 +19,7 @@ Everything comes up with one command:
 docker compose up --build
 ```
 
-- Dashboard: http://localhost:5173
+- Dashboard: http://localhost:8090
 - API: http://localhost:8080
 - Postgres: localhost:5432 (`routing` / `routing`)
 
