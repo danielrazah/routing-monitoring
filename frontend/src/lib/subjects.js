@@ -1,9 +1,5 @@
-// The subjects the API accepts, with human labels for the form.
-export const SUBJECTS = [
-  { value: 'CARD_ISSUE', label: 'Card issue' },
-  { value: 'LOAN_CONTRACTING', label: 'Loan contracting' },
-  { value: 'OTHER', label: 'Other' },
-]
+// The subject values the API accepts. Human labels come from i18n (tv('subject', value)).
+export const SUBJECT_VALUES = ['CARD_ISSUE', 'LOAN_CONTRACTING', 'OTHER']
 
 // Accent colors per event type, used in the live feed.
 export const EVENT_STYLES = {
