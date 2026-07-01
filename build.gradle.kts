@@ -25,13 +25,17 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-websocket")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-	// Database schema is versioned with Flyway.
-	implementation("org.flywaydb:flyway-core")
+	// Database schema is versioned with Flyway. In Spring Boot 4 the Flyway
+	// auto-configuration lives in its own module, so we depend on that (not just flyway-core)
+	// for migrations to actually run on startup.
+	implementation("org.springframework.boot:spring-boot-flyway")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
+	// Spring Boot 4.1's BOM doesn't manage the Testcontainers modules, so pin them here.
+	testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.4"))
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:postgresql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
