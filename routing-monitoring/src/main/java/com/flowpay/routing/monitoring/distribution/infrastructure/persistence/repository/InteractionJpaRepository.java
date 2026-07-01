@@ -26,4 +26,13 @@ public interface InteractionJpaRepository extends JpaRepository<InteractionJpaEn
             LIMIT 1
             """, nativeQuery = true)
     Optional<InteractionJpaEntity> findOldestInServiceByTeam(@Param("teamId") UUID teamId);
+
+    /** Names of the customers a team is serving right now, oldest first (for the dashboard). */
+    @Query(value = """
+            SELECT i.customer_name FROM interaction i
+            JOIN agent a ON a.id = i.assigned_agent_id
+            WHERE a.team_id = :teamId AND i.state = 'IN_SERVICE'
+            ORDER BY i.created_at
+            """, nativeQuery = true)
+    List<String> findServingCustomerNamesByTeam(@Param("teamId") UUID teamId);
 }

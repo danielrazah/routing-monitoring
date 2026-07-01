@@ -51,7 +51,9 @@ public class DashboardController {
                                         interactions.countByAssignedAgentIdAndState(
                                                 agent.getId(), InteractionState.IN_SERVICE.name()),
                                         Agent.MAX_CONCURRENT))
-                                .toList()))
+                                .toList(),
+                        interactions.findServingCustomerNamesByTeam(team.getId()),
+                        queue.findQueuedCustomerNamesByTeam(team.getId())))
                 .toList();
         return new DashboardSnapshot(teamSnapshots);
     }
