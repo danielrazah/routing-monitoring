@@ -6,6 +6,8 @@ import com.flowpay.routing.monitoring.distribution.domain.port.in.EndInteraction
 import com.flowpay.routing.monitoring.distribution.domain.port.in.InteractionView;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.CreateInteractionRequest;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.InteractionResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /** The two things the outside world can do: open a contact and close one. */
+@Tag(name = "Interactions", description = "Open and close customer interactions")
 @RestController
 @RequestMapping("/api/interactions")
 public class InteractionController {
@@ -30,6 +33,8 @@ public class InteractionController {
         this.endInteraction = endInteraction;
     }
 
+    @Operation(summary = "Open a new interaction",
+            description = "Routes it to a team and either assigns a free agent or puts it in the queue.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public InteractionResponse create(@Valid @RequestBody CreateInteractionRequest request) {
@@ -38,6 +43,8 @@ public class InteractionController {
         return InteractionResponse.from(view);
     }
 
+    @Operation(summary = "End an interaction",
+            description = "Closes it, frees the agent's slot and pulls the next waiting customer.")
     @PostMapping("/{id}/end")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void end(@PathVariable UUID id) {
