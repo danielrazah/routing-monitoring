@@ -10,4 +10,7 @@ public interface InteractionJpaRepository extends JpaRepository<InteractionJpaEn
 
     /** The cases an agent is currently serving, used to reconstruct their live load. */
     List<InteractionJpaEntity> findByAssignedAgentIdAndState(UUID assignedAgentId, String state);
+
+    /** How many cases an agent is serving right now, for the dashboard snapshot. */
+    long countByAssignedAgentIdAndState(UUID assignedAgentId, String state);
 }

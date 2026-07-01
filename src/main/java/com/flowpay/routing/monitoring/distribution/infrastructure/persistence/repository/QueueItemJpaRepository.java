@@ -25,4 +25,7 @@ public interface QueueItemJpaRepository extends JpaRepository<QueueItemJpaEntity
             LIMIT 1
             """, nativeQuery = true)
     Optional<QueueItemJpaEntity> lockNextForTeam(@Param("teamId") UUID teamId);
+
+    /** How many customers are currently waiting for a team, for the dashboard snapshot. */
+    long countByTeamId(UUID teamId);
 }
