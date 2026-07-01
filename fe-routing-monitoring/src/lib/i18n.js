@@ -15,6 +15,9 @@ const DICTS = {
     'teams.noQueue': 'No queue',
     'teams.serveNext': 'Serve next',
     'teams.serveNextHint': 'Frees a slot and pulls the next customer in line',
+    'teams.inService': 'In service',
+    'teams.inQueue': 'In queue',
+    'teams.none': 'nobody',
 
     'form.title': 'New contact',
     'form.subtitle': 'Simulate a customer reaching out.',
@@ -61,6 +64,9 @@ const DICTS = {
     'teams.noQueue': 'Sem fila',
     'teams.serveNext': 'Atender próximo',
     'teams.serveNextHint': 'Libera uma vaga e chama o próximo da fila',
+    'teams.inService': 'Em atendimento',
+    'teams.inQueue': 'Na fila',
+    'teams.none': 'ninguém',
 
     'form.title': 'Novo atendimento',
     'form.subtitle': 'Simule um cliente entrando em contato.',
