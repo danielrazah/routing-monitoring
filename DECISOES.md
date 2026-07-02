@@ -75,6 +75,11 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
   encontrado, 409 para regra violada, 422 para roteamento, 400 para entrada inválida.
   Entidades JPA nunca aparecem na API.
 
+- **Documentação da API.** O spec OpenAPI é gerado pelo springdoc e renderizado pelo
+  **Scalar** (uma UI de referência moderna) em `/scalar`, em tema escuro por padrão. O JSON
+  do spec fica em `/v3/api-docs`. Preferimos o Scalar ao Swagger UI por ser mais enxuto e
+  legível.
+
 - **Virtual threads (Java 21).** `spring.threads.virtual.enabled=true`: chamadas JDBC/fila
   bloqueantes ganham uma thread barata cada e escalam bem.
 
@@ -100,12 +105,9 @@ time/atendente e mostra frases legíveis em vez de UUIDs.
 - **Teste unitário puro** (sem Spring/banco) provando a regra dos 3 e o enfileiramento.
 - **Teste de integração** com Testcontainers exercitando o `SKIP LOCKED` num Postgres real.
 - **Smoke test** que sobe o contexto inteiro (garante que tudo se conecta).
-
-## Compatibilidade Spring Boot 4.1
-
-O Boot 4 é modular. Ajustes necessários descobertos rodando o build: usar o módulo
-`spring-boot-flyway` (sem ele as migrations não rodam), fixar as versões do Testcontainers
-pelo BOM, e usar Tomcat (Undertow foi removido).
+- **Cobertura com JaCoCo.** `./gradlew test` também gera um relatório em
+  `build/reports/jacoco/test/html/index.html`, concentrado no núcleo de domínio (onde estão
+  as regras); adapters de web/persistência têm menos cobertura por opção.
 
 ## Git
 

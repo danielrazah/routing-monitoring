@@ -27,12 +27,13 @@ docker compose up --build
 
 A primeira vez demora alguns minutos (baixa dependências dentro dos containers).
 
-| Serviço   | URL                              |
-|-----------|----------------------------------|
-| Dashboard | http://localhost:8090            |
-| API       | http://localhost:8080/api        |
-| Health    | http://localhost:8080/actuator/health |
-| Postgres  | localhost:5432 (`routing` / `routing`) |
+| Serviço          | URL                              |
+|------------------|----------------------------------|
+| Dashboard        | http://localhost:8090            |
+| API              | http://localhost:8080/api        |
+| Docs REST (Scalar) | http://localhost:8080/scalar   |
+| Health           | http://localhost:8080/actuator/health |
+| Postgres         | localhost:5432 (`routing` / `routing`) |
 
 ## Testar rapidamente
 
