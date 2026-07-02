@@ -15,7 +15,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  */
 @SpringBootTest
 @Testcontainers
-@TestPropertySource(properties = "distribution.demo.seed-on-startup=false")
+@TestPropertySource(properties = {
+        "distribution.demo.seed-on-startup=false",
+        "distribution.realtime.transport=simple"}) // no external broker in the test environment
 class RoutingMonitoringApplicationTests {
 
     @Container

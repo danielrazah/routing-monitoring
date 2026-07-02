@@ -81,25 +81,25 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
     instância chega aos dashboards conectados a *todas* elas. É isso que viabiliza rodar o
     backend atrás de um load balancer com várias réplicas (**escala horizontal**). É o
     **padrão ao subir com Docker** (`docker compose up` já sobe o RabbitMQ e liga o relay).
+    É o **padrão da aplicação** (`application.properties`: `distribution.realtime.transport=broker`),
+    logo `docker compose up` e `gradlew bootRun` já sobem em modo broker.
   - `simple`: broker **em memória**. Zero infra extra, ideal para uma instância; cada
-    instância só alcança os dashboards conectados a ela mesma. Fica como **opção** para
-    rodar enxuto (`REALTIME_TRANSPORT=simple docker compose up`).
+    instância só alcança os dashboards conectados a ela mesma. Fica como **opção** de opt-out
+    (`REALTIME_TRANSPORT=simple`), útil no desenvolvimento local sem um broker.
 
+  **Default é `broker` em todo lugar.** Como a entrega de eventos é **best-effort e acontece
+  depois do commit**, um broker ausente ou ainda conectando **nunca quebra a operação de
+  negócio**: o `DashboardNotifier` engole e loga a falha de envio, e o dashboard cai no
+  *polling*. Por isso o broker pode ser o padrão sem risco mesmo rodando local sem RabbitMQ.
+  A **suíte de testes** fixa `transport=simple` (via `@TestPropertySource`), para não exigir
+  um broker externo no CI.
 
-
-  Os dois defaults são propositalmente diferentes: **no Docker o padrão é `broker`** (stack
-  pronta para escalar); **na aplicação** (`application.properties`, usado em `gradlew bootRun`
-  e nos testes) o default é `simple`, para não exigir um broker no desenvolvimento local nem
-  na suíte de testes.
-
-
-
-  O ponto-chave é que **nada** no código que publica muda (`DashboardNotifier`,
-  `SimpMessagingTemplate`) e o **frontend também não muda** — só a configuração do broker.
-  A fila de atendimento **continua no Postgres** (`SKIP LOCKED`): o broker aqui é só o
-  transporte de notificações em tempo real, não a linha de espera (ver a decisão acima sobre
-  por que a fila é uma tabela, e não um broker). Ver *Modo simple (opcional)* no
-  `COMO-SUBIR.md`.
+  O ponto-chave é que **nada** no código que publica muda (`DashboardNotifier` só ganhou o
+  tratamento best-effort; `SimpMessagingTemplate` é o mesmo) e o **frontend também não muda** —
+  só a configuração do broker. A fila de atendimento **continua no Postgres** (`SKIP LOCKED`):
+  o broker aqui é só o transporte de notificações em tempo real, não a linha de espera (ver a
+  decisão acima sobre por que a fila é uma tabela, e não um broker). Ver *Modo simple (opcional)*
+  no `COMO-SUBIR.md`.
 
 
 
