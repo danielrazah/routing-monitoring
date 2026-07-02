@@ -35,9 +35,21 @@ A primeira vez demora alguns minutos (baixa dependências dentro dos containers)
 | Health           | http://localhost:8080/actuator/health |
 | Postgres         | localhost:5432 (`routing` / `routing`) |
 
+## Acesso (login)
+
+O dashboard exige login. Contas de demonstração:
+
+| Usuário  | Senha      | Perfil                                    |
+|----------|------------|-------------------------------------------|
+| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende fila |
+| `viewer` | `viewer123`| VIEWER — só visualiza o dashboard         |
+
+O `viewer` entra e vê tudo, mas não vê os controles de escrita (formulário e botão
+"Atender próximo").
+
 ## Testar rapidamente
 
-1. Abra o dashboard em http://localhost:8090.
+1. Abra o dashboard em http://localhost:8090 e entre como `admin`.
 2. No formulário **Novo atendimento**, crie vários contatos do mesmo assunto
    (ex.: *Contratação de empréstimo*, que vai para o time Empréstimos com 1 atendente).
 3. Os 3 primeiros ocupam o atendente; a partir do 4º entram na **fila**.

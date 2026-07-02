@@ -86,6 +86,16 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
 - **"Atender próximo".** Botão por time que libera uma vaga (encerra o atendimento mais
   antigo em andamento), o que reaproveita o `EndInteraction` e puxa o próximo da fila.
 
+## Segurança
+
+Acesso por login com **JWT stateless**: o Spring Security funciona como *resource server*
+e o token é HMAC assinado/validado com o Nimbus (sem lib de terceiros). Dois perfis por
+**role** — `ADMIN` altera o estado (criar/encerrar atendimentos, atender a fila) e `VIEWER`
+só lê o dashboard. As rotas de escrita exigem ADMIN; login, docs (Scalar) e health ficam
+abertos. O frontend guarda o token, envia como `Bearer` e volta para a tela de login em
+401/403. Usuários são in-memory (demo); trocar por um provedor real é só reimplementar o
+`UserDetailsService`.
+
 ## Tempo real (e o caso do Safari)
 
 O dashboard recebe eventos por **WebSocket nativo** (STOMP), que passa limpo pelo nginx.
