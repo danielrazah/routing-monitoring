@@ -35,7 +35,7 @@ describe('apiFetch', () => {
   })
 
   it('logs out and throws on 403', async () => {
-    useAuthStore.setState({ token: 'jwt-9', username: 'viewer', roles: ['VIEWER'] })
+    useAuthStore.setState({ token: 'jwt-9', username: 'carla', roles: ['AGENT'] })
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 403 })
     await expect(apiFetch('/api/interactions', { method: 'POST' })).rejects.toThrow()
     expect(useAuthStore.getState().token).toBeNull()

@@ -33,8 +33,8 @@ describe('DashboardPage', () => {
     expect(screen.getByText('New contact')).toBeInTheDocument()
   })
 
-  it('hides the new-contact form for a viewer', () => {
-    useAuthStore.setState({ token: 'x', username: 'viewer', roles: ['VIEWER'] })
+  it('hides the new-contact form for an agent', () => {
+    useAuthStore.setState({ token: 'x', username: 'carla', roles: ['AGENT'] })
     render(<DashboardPage />)
     expect(screen.queryByText('New contact')).toBeNull()
   })

@@ -28,8 +28,9 @@ import java.nio.charset.StandardCharsets;
  * Stateless security: the API is a JWT resource server. Login issues a signed token that
  * carries the user's roles; every other call must present it as a Bearer token.
  *
- * Roles: ADMIN can change things (create/end interactions, advance queues); VIEWER can only
- * read the dashboard. Docs and login stay open so the UI and Scalar work without a token.
+ * Roles: ADMIN can change things (create/end interactions, advance queues) and see every team;
+ * AGENT only reads the dashboard, scoped to its own team. Docs and login stay open so the UI
+ * and Scalar work without a token.
  */
 @Configuration
 public class SecurityConfig {
@@ -57,8 +58,8 @@ public class SecurityConfig {
                         // Changing state requires ADMIN.
                         .requestMatchers(HttpMethod.POST, "/api/interactions", "/api/interactions/*/end",
                                 "/api/teams/*/advance-queue").hasRole("ADMIN")
-                        // Reading the dashboard is enough to be logged in.
-                        .requestMatchers(HttpMethod.GET, "/api/dashboard").hasAnyRole("ADMIN", "VIEWER")
+                        // Reading the dashboard is open to any signed-in user (ADMIN or AGENT).
+                        .requestMatchers(HttpMethod.GET, "/api/dashboard").hasAnyRole("ADMIN", "AGENT")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)))
                 .httpBasic(basic -> basic.disable())

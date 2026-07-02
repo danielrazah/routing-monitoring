@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TokenServiceTest {
@@ -30,7 +31,7 @@ class TokenServiceTest {
 
     @Test
     void issuesATokenCarryingSubjectAndRoles() {
-        String token = tokenService.issue("admin", List.of("ADMIN"));
+        String token = tokenService.issue("admin", List.of("ADMIN"), null);
 
         Jwt jwt = decoder.decode(token); // also proves the signature validates
         assertEquals("admin", jwt.getSubject());
@@ -38,6 +39,17 @@ class TokenServiceTest {
         assertEquals("routing-monitoring", jwt.getClaimAsString("iss"));
         assertNotNull(jwt.getExpiresAt());
         assertTrue(jwt.getExpiresAt().isAfter(jwt.getIssuedAt()));
+        assertNull(jwt.getClaimAsString("teamId")); // ADMIN is not scoped to a team
+    }
+
+    @Test
+    void anAgentTokenCarriesItsTeamId() {
+        String teamId = "22222222-2222-2222-2222-222222222222";
+        String token = tokenService.issue("carla", List.of("AGENT"), teamId);
+
+        Jwt jwt = decoder.decode(token);
+        assertEquals(List.of("AGENT"), jwt.getClaimAsStringList("roles"));
+        assertEquals(teamId, jwt.getClaimAsString("teamId"));
     }
 
     @Test

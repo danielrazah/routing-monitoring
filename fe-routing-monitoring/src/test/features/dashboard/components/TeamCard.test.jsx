@@ -43,8 +43,8 @@ describe('TeamCard', () => {
     await waitFor(() => expect(serveNext).toHaveBeenCalledWith('t1'))
   })
 
-  it('hides the Serve next button from a viewer', () => {
-    useAuthStore.setState({ token: 'x', username: 'viewer', roles: ['VIEWER'] })
+  it('hides the Serve next button from an agent', () => {
+    useAuthStore.setState({ token: 'x', username: 'carla', roles: ['AGENT'] })
     render(<TeamCard team={team} />)
     expect(screen.queryByText('Serve next')).toBeNull()
   })

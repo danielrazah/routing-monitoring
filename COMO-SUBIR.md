@@ -44,15 +44,18 @@ Quem quiser o modo enxuto de uma instância só (broker em memória, sem RabbitM
 ## Acesso (login)
 
 O dashboard exige login. Contas de demonstração:
-OBS: Para facilitar a vida de quem vai avaliar, coloquei dois perfis para emular o uso de Roles do spring security.
+OBS: Para facilitar a avaliação, há dois perfis para emular o uso de Roles do Spring Security.
 
-| Usuário  | Senha      | Perfil                                                         |
-|----------|------------|----------------------------------------------------------------|
-| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende fila e emula cliente |
-| `viewer` | `viewer123`| VIEWER — só visualiza o dashboard                              |
+| Usuário  | Senha      | Perfil                                                             |
+|----------|------------|-------------------------------------------------------------------|
+| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende fila, vê **todos** os times |
+| `ana`    | `agent123` | AGENT — só leitura, vê **apenas** o time Cartões                   |
+| `carla`  | `agent123` | AGENT — só leitura, vê **apenas** o time Empréstimos               |
+| `diego`  | `agent123` | AGENT — só leitura, vê **apenas** o time Outros                    |
 
-O `viewer` entra e vê tudo, mas não vê os controles de escrita (formulário e botão
-"Atender próximo").
+Um `AGENT` entra e vê **somente o time a que pertence** (definido no banco, `app_user.team_id`),
+sem os controles de escrita (formulário de novo atendimento e botão "Atender próximo"). O `ADMIN`
+vê todos os times e opera tudo.
 
 ## Testar rapidamente
 
