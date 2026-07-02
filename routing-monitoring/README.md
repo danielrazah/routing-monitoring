@@ -38,7 +38,7 @@ fill agents (max 3 each) and then queue. End one and the next in line is picked 
 
 `subject` is one of `CARD_ISSUE`, `LOAN_CONTRACTING`, `OTHER`.
 
-Interactive API docs (Swagger UI): http://localhost:8080/swagger-ui.html
+Interactive API docs (Scalar): http://localhost:8080/scalar
 (OpenAPI spec at `/v3/api-docs`).
 
 ## Architecture

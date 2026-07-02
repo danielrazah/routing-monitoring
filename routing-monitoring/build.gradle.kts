@@ -33,8 +33,8 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")
 
-	// OpenAPI docs + Swagger UI (springdoc 3.x targets Spring Boot 4).
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+	// OpenAPI docs + Scalar API reference UI (springdoc 3.x targets Spring Boot 4).
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.0.3")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
