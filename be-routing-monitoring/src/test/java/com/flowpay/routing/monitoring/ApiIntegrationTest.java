@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@TestPropertySource(properties = "distribution.demo.seed-on-startup=false")
 class ApiIntegrationTest {
 
     @Container
@@ -121,6 +123,35 @@ class ApiIntegrationTest {
                     "{\"customerName\":\"L%d\",\"subject\":\"LOAN_CONTRACTING\"}".formatted(i)).status());
         }
         assertEquals(204, send("POST", "/api/teams/" + LOANS + "/advance-queue", token, null).status());
+    }
+
+    @Test
+    void publicCustomerJoinsTheQueueAndChecksStatusWithoutAuth() throws Exception {
+        // No token: the customer screen is open.
+        Resp joined = send("POST", "/api/public/interactions", null,
+                "{\"customerName\":\"Cliente Web\",\"subject\":\"OTHER\"}");
+        assertEquals(201, joined.status());
+        JsonNode node = json.readTree(joined.body());
+        assertTrue(node.hasNonNull("id"));
+        // Fresh container (seed off): Others has a free agent, so it goes straight into service.
+        assertEquals("IN_SERVICE", node.get("state").asText());
+
+        // Status endpoint is public too.
+        String id = node.get("id").asText();
+        Resp status = send("GET", "/api/public/interactions/" + id, null, null);
+        assertEquals(200, status.status());
+        assertEquals("IN_SERVICE", json.readTree(status.body()).get("state").asText());
+    }
+
+    @Test
+    void publicJoinRejectsInvalidInputWith400() throws Exception {
+        assertEquals(400, send("POST", "/api/public/interactions", null,
+                "{\"customerName\":\"\",\"subject\":\"OTHER\"}").status());
+    }
+
+    @Test
+    void publicStatusOfUnknownInteractionIs404() throws Exception {
+        assertEquals(404, send("GET", "/api/public/interactions/" + UUID.randomUUID(), null, null).status());
     }
 
     @Test

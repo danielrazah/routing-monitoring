@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from '@/App.jsx'
 import { useAuthStore } from '@/features/auth/authStore.js'
@@ -12,6 +12,16 @@ vi.mock('@/features/dashboard/api.js', () => ({
 }))
 
 describe('App', () => {
+  // Some tests navigate; always return to the root path afterwards.
+  afterEach(() => window.history.pushState({}, '', '/'))
+
+  it('shows the customer queue screen on the /atendimento path', () => {
+    window.history.pushState({}, '', '/atendimento')
+    useAuthStore.setState({ token: null, username: null, roles: [] })
+    render(<App />)
+    expect(screen.getByText('Talk to us')).toBeInTheDocument()
+  })
+
   it('shows the login screen when unauthenticated', () => {
     useAuthStore.setState({ token: null, username: null, roles: [] })
     render(<App />)

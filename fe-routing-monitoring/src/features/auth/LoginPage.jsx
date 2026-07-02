@@ -67,6 +67,9 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-5 text-center text-[11px] text-slate-500">{t('login.demo')}</p>
+        <p className="mt-2 text-center text-[11px]">
+          <a href="/atendimento" className="text-teal-400 hover:underline">{t('login.customerCta')}</a>
+        </p>
       </form>
     </div>
   )
