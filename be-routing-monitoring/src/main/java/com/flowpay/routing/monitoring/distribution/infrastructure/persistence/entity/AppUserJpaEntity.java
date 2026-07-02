@@ -31,6 +31,10 @@ public class AppUserJpaEntity {
     @Column(name = "team_id")
     private UUID teamId;
 
+    /** The agent this login represents; null for ADMIN. */
+    @Column(name = "agent_id")
+    private UUID agentId;
+
     @Column(nullable = false)
     private boolean enabled;
 
@@ -56,6 +60,10 @@ public class AppUserJpaEntity {
 
     public UUID getTeamId() {
         return teamId;
+    }
+
+    public UUID getAgentId() {
+        return agentId;
     }
 
     public boolean isEnabled() {

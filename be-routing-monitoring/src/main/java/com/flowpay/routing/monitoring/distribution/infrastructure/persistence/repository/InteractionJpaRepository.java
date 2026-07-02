@@ -35,4 +35,12 @@ public interface InteractionJpaRepository extends JpaRepository<InteractionJpaEn
             ORDER BY i.created_at
             """, nativeQuery = true)
     List<String> findServingCustomerNamesByTeam(@Param("teamId") UUID teamId);
+
+    /** Names of the customers a single agent is serving right now, oldest first. */
+    @Query(value = """
+            SELECT customer_name FROM interaction
+            WHERE assigned_agent_id = :agentId AND state = 'IN_SERVICE'
+            ORDER BY created_at
+            """, nativeQuery = true)
+    List<String> findServingCustomerNamesByAgent(@Param("agentId") UUID agentId);
 }

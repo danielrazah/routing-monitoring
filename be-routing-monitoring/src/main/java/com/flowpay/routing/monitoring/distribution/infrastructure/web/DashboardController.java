@@ -74,7 +74,8 @@ public class DashboardController {
                                         agent.getName(),
                                         interactions.countByAssignedAgentIdAndState(
                                                 agent.getId(), InteractionState.IN_SERVICE.name()),
-                                        properties.getMaxConcurrentPerAgent()))
+                                        properties.getMaxConcurrentPerAgent(),
+                                        interactions.findServingCustomerNamesByAgent(agent.getId())))
                                 .toList(),
                         interactions.findServingCustomerNamesByTeam(team.getId()),
                         queue.findQueuedCustomerNamesByTeam(team.getId())))

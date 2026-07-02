@@ -5,7 +5,8 @@ import { useAuthStore } from '../../auth/authStore.js'
 import { useDashboardStore } from '../dashboardStore.js'
 
 export default function TeamCard({ team }) {
-  const canServe = useAuthStore((s) => s.roles.includes('ADMIN'))
+  // ADMIN serves any team; an AGENT serves its own team (it only sees that one).
+  const canServe = useAuthStore((s) => s.roles.includes('ADMIN') || s.roles.includes('AGENT'))
   const advance = useDashboardStore((s) => s.serveNext)
   const totalLoad = team.agents.reduce((sum, a) => sum + a.currentLoad, 0)
   const totalCapacity = team.agents.reduce((sum, a) => sum + a.maxConcurrent, 0)
@@ -13,6 +14,8 @@ export default function TeamCard({ team }) {
   const hasQueue = team.waiting > 0
   const serving = team.serving ?? []
   const queue = team.queue ?? []
+  // With more than two agents, hovering an agent's row reveals who they're serving.
+  const perAgentServing = team.agents.length > 2
 
   async function serveNext() {
     setBusy(true)
@@ -40,7 +43,7 @@ export default function TeamCard({ team }) {
           <li className="text-sm text-slate-500">{t('teams.noAgents')}</li>
         )}
         {team.agents.map((agent) => (
-          <li key={agent.id} className="flex items-center justify-between gap-3">
+          <li key={agent.id} className="group relative flex items-center justify-between gap-3">
             <span className="truncate text-sm text-slate-200">{agent.name}</span>
             <div className="flex items-center gap-3">
               <CapacityMeter load={agent.currentLoad} max={agent.maxConcurrent} />
@@ -48,6 +51,7 @@ export default function TeamCard({ team }) {
                 {agent.currentLoad}/{agent.maxConcurrent}
               </span>
             </div>
+            {perAgentServing && <AgentServingPopover agent={agent} />}
           </li>
         ))}
       </ul>
@@ -75,6 +79,24 @@ export default function TeamCard({ team }) {
         >
           {t('teams.serveNext')}
         </button>
+      )}
+    </div>
+  )
+}
+
+function AgentServingPopover({ agent }) {
+  const names = agent.serving ?? []
+  return (
+    <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-max min-w-[9rem] max-w-[14rem] rounded-lg bg-slate-950 p-2.5 text-xs shadow-xl ring-1 ring-slate-700 group-hover:block">
+      <p className="mb-1 font-medium text-slate-400">{t('teams.servingBy', { name: agent.name })}</p>
+      {names.length === 0 ? (
+        <p className="text-slate-600">{t('teams.none')}</p>
+      ) : (
+        <ul className="space-y-0.5">
+          {names.map((name, i) => (
+            <li key={`${name}-${i}`} className="truncate text-slate-200">{name}</li>
+          ))}
+        </ul>
       )}
     </div>
   )

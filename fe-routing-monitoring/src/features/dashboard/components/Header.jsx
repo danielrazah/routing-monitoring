@@ -20,9 +20,9 @@ export default function Header() {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <div className="grid h-11 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200">
+        <a href="/" aria-label={t('nav.home')} className="grid h-11 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200 transition hover:opacity-90">
           <img src={ubotsLogo} alt="ubots" className="h-6 w-auto" />
-        </div>
+        </a>
         <div>
           <h1 className="text-xl font-semibold tracking-tight">FlowPay · Routing Monitoring</h1>
           <p className="text-sm text-slate-400">{t('header.subtitle')}</p>

@@ -44,6 +44,7 @@ class ApiIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
+    private static final UUID CARDS = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID LOANS = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
     @Value("${local.server.port}")
@@ -174,6 +175,41 @@ class ApiIntegrationTest {
                 .get("teams");
         assertEquals(1, teams.size());
         assertEquals("Loans", teams.get(0).get("name").asText());
+    }
+
+    @Test
+    void agentCanAdvanceItsOwnTeamQueueButNotAnothers() throws Exception {
+        String admin = login("admin", "admin123");
+        // Fill Loans (single agent, 3 slots) so there is something in service to advance.
+        for (int i = 0; i < 5; i++) {
+            send("POST", "/api/interactions", admin,
+                    "{\"customerName\":\"L%d\",\"subject\":\"LOAN_CONTRACTING\"}".formatted(i));
+        }
+
+        String carla = login("carla", "agent123"); // AGENT on Loans
+        assertEquals(204, send("POST", "/api/teams/" + LOANS + "/advance-queue", carla, null).status());
+        // ...but not another team's queue.
+        assertEquals(403, send("POST", "/api/teams/" + CARDS + "/advance-queue", carla, null).status());
+    }
+
+    @Test
+    void dashboardBreaksDownWhichCustomersEachAgentIsServing() throws Exception {
+        String admin = login("admin", "admin123");
+        send("POST", "/api/interactions", admin, "{\"customerName\":\"Marina\",\"subject\":\"CARD_ISSUE\"}");
+
+        JsonNode teams = json.readTree(send("GET", "/api/dashboard", admin, null).body()).get("teams");
+        JsonNode cards = null;
+        for (JsonNode team : teams) {
+            if ("Cards".equals(team.get("name").asText())) cards = team;
+        }
+        // Some Cards agent now lists Marina under its own "serving" list.
+        boolean found = false;
+        for (JsonNode agent : cards.get("agents")) {
+            for (JsonNode name : agent.get("serving")) {
+                if ("Marina".equals(name.asText())) found = true;
+            }
+        }
+        assertTrue(found, "the assigned agent should list Marina in its serving names");
     }
 
     @Test

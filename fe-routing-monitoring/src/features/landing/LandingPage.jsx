@@ -37,9 +37,9 @@ export default function LandingPage() {
     <div className="grid min-h-screen place-items-center px-6 py-12">
       <div className="w-full max-w-3xl">
         <div className="mb-10 flex flex-col items-center text-center">
-          <div className="mb-5 grid h-12 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200">
+          <a href="/" aria-label={t('nav.home')} className="mb-5 grid h-12 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200 transition hover:opacity-90">
             <img src={ubotsLogo} alt="ubots" className="h-7 w-auto" />
-          </div>
+          </a>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-teal-400/80">{t('landing.tagline')}</p>
           <h1 className="mt-3 bg-gradient-to-r from-indigo-300 via-slate-100 to-teal-300 bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-4xl">
             {t('landing.title')}
