@@ -54,6 +54,12 @@ public class RealtimeProperties {
         private int port = 61613;
         private String login = "guest";
         private String passcode = "guest";
+        /**
+         * STOMP {@code host} header sent on CONNECT, which the broker reads as the virtual host.
+         * Defaults to RabbitMQ's default vhost {@code /}. If left unset, the relay would send the
+         * relay host name as the vhost and RabbitMQ would reject the connection.
+         */
+        private String virtualHost = "/";
 
         public String getHost() {
             return host;
@@ -61,6 +67,14 @@ public class RealtimeProperties {
 
         public void setHost(String host) {
             this.host = host;
+        }
+
+        public String getVirtualHost() {
+            return virtualHost;
+        }
+
+        public void setVirtualHost(String virtualHost) {
+            this.virtualHost = virtualHost;
         }
 
         public int getPort() {

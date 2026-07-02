@@ -39,6 +39,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             registry.enableStompBrokerRelay("/topic")
                     .setRelayHost(relay.getHost())
                     .setRelayPort(relay.getPort())
+                    // Without this the relay sends the relay host as the STOMP `host` header,
+                    // which RabbitMQ reads as a (non-existent) virtual host and rejects.
+                    .setVirtualHost(relay.getVirtualHost())
                     .setClientLogin(relay.getLogin())
                     .setClientPasscode(relay.getPasscode())
                     .setSystemLogin(relay.getLogin())

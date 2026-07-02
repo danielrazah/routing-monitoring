@@ -32,6 +32,7 @@ class WebSocketConfigTest {
         props.setTransport(RealtimeProperties.Transport.BROKER);
         props.getRelay().setHost("rabbitmq");
         props.getRelay().setPort(61613);
+        props.getRelay().setVirtualHost("/");
         props.getRelay().setLogin("app");
         props.getRelay().setPasscode("secret");
 
@@ -48,6 +49,7 @@ class WebSocketConfigTest {
         verify(registry, never()).enableSimpleBroker(any());
         verify(relayRegistration).setRelayHost("rabbitmq");
         verify(relayRegistration).setRelayPort(61613);
+        verify(relayRegistration).setVirtualHost("/");
         verify(relayRegistration).setClientLogin("app");
         verify(relayRegistration).setClientPasscode("secret");
         verify(relayRegistration).setSystemLogin("app");
