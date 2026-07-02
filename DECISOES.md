@@ -51,8 +51,12 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
   fora. O `DistributionService` é lógica pura: escolhe o atendente menos ocupado ou manda
   para a fila.
 
+
+
 - **Strategy para roteamento (Open/Closed).** Cada time é uma `RoutingStrategy`. Um time
   novo = uma classe nova + uma linha de `@Bean`; nada existente muda.
+
+
 
 
 - **A fila é uma tabela no Postgres, não um broker.** A fila é regra de negócio: ordenada,
@@ -61,32 +65,78 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
   cliente) sem precisar subir RabbitMQ/ActiveMQ só para isso.
 
 
+
+
 - **Eventos de domínio desacoplam as pontas.** O núcleo publica por um port `EventPublisher`;
   um adapter Spring joga no event bus e um listener converte em mensagem WebSocket **depois
   do commit**. O domínio não sabe que WebSocket existe.
+
+
+
+- **Transporte do tempo real é plugável, com o broker como padrão (pensando em escala
+  horizontal).** O push para o dashboard é STOMP sobre WebSocket, e o *broker* que serve o
+  `/topic` é escolhido por propriedade `distribution.realtime.transport`:
+  - `broker`: faz **relay do `/topic` para um broker STOMP externo** (RabbitMQ). Assim
+    **N instâncias do backend compartilham o mesmo tópico** — um evento gerado em qualquer
+    instância chega aos dashboards conectados a *todas* elas. É isso que viabiliza rodar o
+    backend atrás de um load balancer com várias réplicas (**escala horizontal**). É o
+    **padrão ao subir com Docker** (`docker compose up` já sobe o RabbitMQ e liga o relay).
+  - `simple`: broker **em memória**. Zero infra extra, ideal para uma instância; cada
+    instância só alcança os dashboards conectados a ela mesma. Fica como **opção** para
+    rodar enxuto (`REALTIME_TRANSPORT=simple docker compose up`).
+
+
+
+  Os dois defaults são propositalmente diferentes: **no Docker o padrão é `broker`** (stack
+  pronta para escalar); **na aplicação** (`application.properties`, usado em `gradlew bootRun`
+  e nos testes) o default é `simple`, para não exigir um broker no desenvolvimento local nem
+  na suíte de testes.
+
+
+
+  O ponto-chave é que **nada** no código que publica muda (`DashboardNotifier`,
+  `SimpMessagingTemplate`) e o **frontend também não muda** — só a configuração do broker.
+  A fila de atendimento **continua no Postgres** (`SKIP LOCKED`): o broker aqui é só o
+  transporte de notificações em tempo real, não a linha de espera (ver a decisão acima sobre
+  por que a fila é uma tabela, e não um broker). Ver *Modo simple (opcional)* no
+  `COMO-SUBIR.md`.
+
+
 
 - **Spring direto na infraestrutura.** Controllers, repositórios JPA e o endpoint de
   snapshot são Spring puro. O snapshot é só uma consulta (sem regra), então lê os
   repositórios direto, sem inventar um port.
 
+
+
 - **Persistência separada do domínio.** Entidades JPA são classes próprias; mappers
   convertem para o domínio. A carga do atendente não é armazenada — é derivada dos
   atendimentos em andamento, então nunca fica dessincronizada.
 
+
+
 - **API limpa.** DTOs são records; erros viram Problem Details (RFC 9457) — 404 para não
   encontrado, 409 para regra violada, 422 para roteamento, 400 para entrada inválida.
   Entidades JPA nunca aparecem na API.
+
+
 
 - **Documentação da API.** O spec OpenAPI é gerado pelo springdoc e renderizado pelo
   **Scalar** (uma UI de referência moderna) em `/scalar`, em tema escuro por padrão. O JSON
   do spec fica em `/v3/api-docs`. Preferi o Scalar ao Swagger UI por ser mais enxuto e
   legível.
 
+
+
 - **Virtual threads (Java 21).** `spring.threads.virtual.enabled=true`: chamadas JDBC/fila
   bloqueantes ganham uma thread barata cada e escalam bem.
 
+
+
 - **"Atender próximo".** Botão por time que libera uma vaga (encerra o atendimento mais
   antigo em andamento), o que reaproveita o `EndInteraction` e puxa o próximo da fila.
+
+
 
 ## Segurança
 

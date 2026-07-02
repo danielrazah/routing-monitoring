@@ -26,6 +26,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-websocket")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 
+	// TCP client used by the STOMP broker relay (distribution.realtime.transport=broker).
+	// Unused in the default in-memory transport; only engaged when relaying to an external
+	// STOMP broker for horizontal scaling. Version is managed by the Spring Boot BOM.
+	implementation("io.projectreactor.netty:reactor-netty-core")
+
 	// Database schema is versioned with Flyway. In Spring Boot 4 the Flyway
 	// auto-configuration lives in its own module, so we depend on that (not just flyway-core)
 	// for migrations to actually run on startup.

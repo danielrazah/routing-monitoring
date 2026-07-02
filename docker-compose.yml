@@ -24,12 +24,40 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/routing
       SPRING_DATASOURCE_USERNAME: routing
       SPRING_DATASOURCE_PASSWORD: routing
+      # Real-time transport. Defaults to `broker`: /topic is relayed through RabbitMQ so the
+      # stack is horizontally scalable out of the box (many backend instances share the topic).
+      # To run the lean single-instance in-memory transport instead:
+      #   REALTIME_TRANSPORT=simple docker compose up
+      # (RabbitMQ still starts but the backend ignores it.)
+      REALTIME_TRANSPORT: ${REALTIME_TRANSPORT:-broker}
+      REALTIME_RELAY_HOST: rabbitmq
+      REALTIME_RELAY_PORT: "61613"
     ports:
       - "8080:8080"
+
+  # STOMP broker for the default (broker) transport, so events fan out across backend
+  # instances. See DECISOES.md. Not used when REALTIME_TRANSPORT=simple.
+  rabbitmq:
+    image: rabbitmq:4-management
+    volumes:
+      # Enables the STOMP plugin (port 61613) alongside the management UI.
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # management UI
+      - "61613:61613"  # STOMP (used by the backend relay)
+    healthcheck:
+      # The backend waits for this before it opens the relay connection.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   frontend:
     build: ./fe-routing-monitoring
