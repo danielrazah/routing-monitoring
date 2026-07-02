@@ -103,6 +103,16 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
 
 
 
+- **Chat cliente↔agente reusa o transporte de tempo real.** Cada atendimento tem uma thread
+  de mensagens (tabela `message`, `V6`), trocadas entre o cliente (tela pública) e o agente
+  (dashboard). Cada nova mensagem é persistida e publicada em `/topic/chat/{interactionId}`,
+  ao qual **os dois lados assinam** — mesmo broker STOMP do dashboard, entrega **best-effort**
+  (o histórico sempre pode ser relido). No backend o cliente usa endpoints públicos
+  (`/api/public/interactions/{id}/messages`) e o agente autenticados
+  (`/api/interactions/{id}/messages`, `/api/agent/conversations`), **restritos ao seu
+  `agent_id`** (um agente só conversa nos atendimentos atribuídos a ele). No frontend um único
+  `ChatThread` serve as duas telas; o agente tem **um diálogo por cliente em atendimento**.
+
 - **Spring direto na infraestrutura.** Controllers, repositórios JPA e o endpoint de
   snapshot são Spring puro. O snapshot é só uma consulta (sem regra), então lê os
   repositórios direto, sem inventar um port.

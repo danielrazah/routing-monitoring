@@ -30,3 +30,28 @@ export function connectDashboard(onMessage, onStatus) {
   client.activate()
   return () => client.deactivate()
 }
+
+/**
+ * Subscribe to one interaction's chat thread over the same native WebSocket.
+ * onMessage receives each new MessageResponse. Returns a disconnect function.
+ * Open like the dashboard broadcast, so the customer (no login) can use it too.
+ */
+export function connectChat(interactionId, onMessage) {
+  const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  let everConnected = false
+
+  const client = new Client({
+    brokerURL: `${scheme}://${window.location.host}/ws`,
+    reconnectDelay: 4000,
+    onConnect: () => {
+      everConnected = true
+      client.subscribe(`/topic/chat/${interactionId}`, (frame) => onMessage(JSON.parse(frame.body)))
+    },
+    onWebSocketClose: () => {
+      if (!everConnected) client.deactivate()
+    },
+  })
+
+  client.activate()
+  return () => client.deactivate()
+}

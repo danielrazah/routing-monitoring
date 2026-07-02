@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { SUBJECT_VALUES } from '../../shared/constants/subjects.js'
 import { joinQueue, fetchInteractionStatus } from '../../shared/api/public.js'
 import { connectDashboard } from '../../shared/api/realtime.js'
+import ChatThread from '../chat/ChatThread.jsx'
 import { t, tv } from '../../shared/i18n/i18n.js'
 import ubotsLogo from '../../assets/ubots-logo.png'
 
@@ -125,19 +126,26 @@ export default function CustomerPage() {
         )}
 
         {phase === 'served' && (
-          <div className="text-center">
-            <div
-              role="img"
-              aria-label={t('customer.welcome')}
-              className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-teal-400 text-3xl shadow-lg shadow-teal-500/20"
-            >
-              👋
+          <div>
+            <div className="mb-4 flex items-center gap-3">
+              <div
+                role="img"
+                aria-label={t('customer.welcome')}
+                className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-teal-400 text-xl shadow-lg shadow-teal-500/20"
+              >
+                👋
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-teal-300">{t('customer.servedTitle')}</h2>
+                <p className="text-[11px] text-slate-400">{t('customer.chatHint')}</p>
+              </div>
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-teal-300">{t('customer.servedTitle')}</h2>
-            <p className="mt-1 text-sm text-slate-400">{t('customer.servedBody')}</p>
+
+            <ChatThread interactionId={interactionId} variant="public" />
+
             <button
               onClick={startOver}
-              className="mt-6 w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-slate-700"
+              className="mt-3 w-full rounded-xl bg-slate-800 px-4 py-2 text-xs font-medium text-slate-300 transition hover:bg-slate-700"
             >
               {t('customer.newContact')}
             </button>

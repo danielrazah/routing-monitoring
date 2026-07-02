@@ -1,10 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
-vi.mock('@/shared/api/realtime.js', () => ({ connectDashboard: vi.fn(() => vi.fn()) }))
+vi.mock('@/shared/api/realtime.js', () => ({
+  connectDashboard: vi.fn(() => vi.fn()),
+  connectChat: vi.fn(() => vi.fn()),
+}))
 vi.mock('@/features/dashboard/api.js', () => ({
   fetchSnapshot: vi.fn().mockResolvedValue({ teams: [] }),
   advanceQueue: vi.fn(),
+}))
+vi.mock('@/shared/api/chat.js', () => ({
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  fetchMessages: vi.fn().mockResolvedValue([]),
+  sendMessage: vi.fn(),
+  fetchPublicMessages: vi.fn().mockResolvedValue([]),
+  sendPublicMessage: vi.fn(),
 }))
 
 import DashboardPage from '@/features/dashboard/DashboardPage.jsx'
@@ -33,9 +43,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('New contact')).toBeInTheDocument()
   })
 
-  it('hides the new-contact form for an agent', () => {
+  it('hides the new-contact form for an agent and shows the conversations panel', () => {
     useAuthStore.setState({ token: 'x', username: 'carla', roles: ['AGENT'] })
     render(<DashboardPage />)
     expect(screen.queryByText('New contact')).toBeNull()
+    expect(screen.getByText('My conversations')).toBeInTheDocument()
   })
 })

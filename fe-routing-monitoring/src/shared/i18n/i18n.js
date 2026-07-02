@@ -65,8 +65,16 @@ const DICTS = {
     'customer.waitingBody': "As soon as an agent is free, we'll let you know right here.",
     'customer.servedTitle': 'You will be served now',
     'customer.servedBody': 'An agent is ready to talk to you.',
+    'customer.chatHint': 'Chat with your agent below.',
     'customer.welcome': 'Welcome',
     'customer.newContact': 'New contact',
+
+    'chat.title': 'My conversations',
+    'chat.subtitle': 'One dialog per customer you are serving.',
+    'chat.noConversations': 'No one in service right now.',
+    'chat.empty': 'No messages yet.',
+    'chat.placeholder': 'Type a message…',
+    'chat.send': 'Send',
 
     'subject.CARD_ISSUE': 'Card issue',
     'subject.LOAN_CONTRACTING': 'Loan contracting',
@@ -154,8 +162,16 @@ const DICTS = {
     'customer.waitingBody': 'Assim que um atendente ficar livre, avisamos aqui.',
     'customer.servedTitle': 'Você será atendido agora',
     'customer.servedBody': 'Um atendente está pronto para falar com você.',
+    'customer.chatHint': 'Converse com seu atendente abaixo.',
     'customer.welcome': 'Boas-vindas',
     'customer.newContact': 'Novo atendimento',
+
+    'chat.title': 'Meus atendimentos',
+    'chat.subtitle': 'Um diálogo para cada cliente que você atende.',
+    'chat.noConversations': 'Ninguém em atendimento agora.',
+    'chat.empty': 'Ainda sem mensagens.',
+    'chat.placeholder': 'Escreva uma mensagem…',
+    'chat.send': 'Enviar',
 
     'subject.CARD_ISSUE': 'Problema com cartão',
     'subject.LOAN_CONTRACTING': 'Contratação de empréstimo',

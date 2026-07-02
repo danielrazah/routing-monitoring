@@ -7,6 +7,13 @@ vi.mock('@/shared/api/public.js', () => ({
 }))
 vi.mock('@/shared/api/realtime.js', () => ({
   connectDashboard: vi.fn(() => () => {}),
+  connectChat: vi.fn(() => () => {}),
+}))
+vi.mock('@/shared/api/chat.js', () => ({
+  fetchPublicMessages: vi.fn().mockResolvedValue([]),
+  sendPublicMessage: vi.fn(),
+  fetchMessages: vi.fn().mockResolvedValue([]),
+  sendMessage: vi.fn(),
 }))
 
 import CustomerPage from '@/features/customer/CustomerPage.jsx'

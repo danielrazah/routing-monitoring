@@ -68,6 +68,11 @@ para o atendente real que representa (`app_user.agent_id`).
 4. Clique em **Atender próximo** no card do time para liberar uma vaga e puxar o
    próximo da fila.
 
+**Chat cliente↔agente:** abra http://localhost:8090/atendimento numa aba e entre na fila (ex.:
+*Contratação de empréstimo*). Noutra aba, entre no dashboard como o agente daquele time (ex.:
+`carla`/`agent123` para Empréstimos): no painel **Meus atendimentos** aparece o cliente. Troquem
+mensagens — os dois veem a conversa em tempo real, com um diálogo por cliente atendido.
+
 Pelo terminal, o mesmo fluxo:
 
 ```bash

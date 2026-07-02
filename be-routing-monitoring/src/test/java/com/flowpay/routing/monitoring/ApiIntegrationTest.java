@@ -213,6 +213,45 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void customerAndAgentExchangeMessagesOnAnInteraction() throws Exception {
+        String admin = login("admin", "admin123");
+        // Loans has a single agent (Carla), so this is assigned to her deterministically.
+        String id = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Chat Cliente\",\"subject\":\"LOAN_CONTRACTING\"}").body())
+                .get("id").asText();
+
+        // Customer sends (public, no auth).
+        assertEquals(201, send("POST", "/api/public/interactions/" + id + "/messages", null,
+                "{\"body\":\"oi, preciso de ajuda\"}").status());
+
+        // The agent sees the conversation and replies.
+        String carla = login("carla", "agent123");
+        assertTrue(send("GET", "/api/agent/conversations", carla, null).body().contains(id),
+                "carla should see the conversation she is serving");
+        assertEquals(201, send("POST", "/api/interactions/" + id + "/messages", carla,
+                "{\"body\":\"claro, como posso ajudar?\"}").status());
+
+        // Both sides see the full thread (customer + agent), oldest first.
+        JsonNode thread = json.readTree(send("GET", "/api/public/interactions/" + id + "/messages", null, null).body());
+        assertEquals(2, thread.size());
+        assertEquals("CUSTOMER", thread.get(0).get("sender").asText());
+        assertEquals("AGENT", thread.get(1).get("sender").asText());
+        assertTrue(thread.get(1).get("body").asText().contains("como posso ajudar"));
+    }
+
+    @Test
+    void anAgentCannotChatOnAnotherAgentsInteraction() throws Exception {
+        String admin = login("admin", "admin123");
+        String loanId = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Chat X\",\"subject\":\"LOAN_CONTRACTING\"}").body()).get("id").asText();
+
+        // diego (Others) is not the assigned agent (Carla is), so he is refused.
+        String diego = login("diego", "agent123");
+        assertEquals(403, send("POST", "/api/interactions/" + loanId + "/messages", diego,
+                "{\"body\":\"intruso\"}").status());
+    }
+
+    @Test
     void rejectsInvalidInputWith400() throws Exception {
         String token = login("admin", "admin123");
         Resp res = send("POST", "/api/interactions", token,
