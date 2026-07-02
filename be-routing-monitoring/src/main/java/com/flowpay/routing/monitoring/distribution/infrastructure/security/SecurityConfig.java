@@ -50,6 +50,8 @@ public class SecurityConfig {
                         // Open: login, API docs and health.
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/scalar", "/scalar/**", "/v3/api-docs/**", "/actuator/health").permitAll()
+                        // Public customer queue: join and check status without logging in.
+                        .requestMatchers("/api/public/**").permitAll()
                         // WebSocket broadcasts carry no sensitive data and no mutations.
                         .requestMatchers("/ws/**").permitAll()
                         // Changing state requires ADMIN.
