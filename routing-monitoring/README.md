@@ -32,10 +32,14 @@ fill agents (max 3 each) and then queue. End one and the next in line is picked 
 |--------|-------------------------------|---------------------------------------|
 | POST   | `/api/interactions`           | Open a contact (`customerName`, `subject`) |
 | POST   | `/api/interactions/{id}/end`  | Close a contact and pull the next in line |
+| POST   | `/api/teams/{teamId}/advance-queue` | Free a slot so the next in line is served |
 | GET    | `/api/dashboard`              | Current snapshot of teams/agents/queues |
 | WS     | `/ws` → `/topic/dashboard`    | Live distribution events (STOMP)      |
 
 `subject` is one of `CARD_ISSUE`, `LOAN_CONTRACTING`, `OTHER`.
+
+Interactive API docs (Swagger UI): http://localhost:8080/swagger-ui.html
+(OpenAPI spec at `/v3/api-docs`).
 
 ## Architecture
 
@@ -97,6 +101,9 @@ distribution/
 ```bash
 ./gradlew test   # requires JDK 21 and Docker (for the integration test)
 ```
+
+Running the tests also writes a **JaCoCo coverage report** to
+`build/reports/jacoco/test/html/index.html`.
 
 ## Notes on the repo
 

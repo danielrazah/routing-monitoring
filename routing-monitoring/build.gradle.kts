@@ -1,5 +1,6 @@
 plugins {
 	java
+	jacoco
 	id("org.springframework.boot") version "4.1.0"
 	id("io.spring.dependency-management") version "1.1.7"
 }
@@ -46,4 +47,33 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+// Test coverage report (JaCoCo). Running `./gradlew test` also produces it at
+// build/reports/jacoco/test/html/index.html.
+jacoco {
+	toolVersion = "0.8.12"
+}
+
+tasks.test {
+	finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+	dependsOn(tasks.test)
+	reports {
+		html.required.set(true)
+		xml.required.set(true)
+	}
+	// The app bootstrap and framework config classes aren't the point of the report.
+	classDirectories.setFrom(
+		classDirectories.files.map {
+			fileTree(it) {
+				exclude(
+					"**/RoutingMonitoringApplication.class",
+					"**/infrastructure/config/**",
+				)
+			}
+		}
+	)
 }
