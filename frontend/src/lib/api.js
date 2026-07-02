@@ -1,5 +1,4 @@
 import { Client } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
 
 // All calls are same-origin: Vite proxies to the backend in dev, nginx does in prod.
 
@@ -25,19 +24,31 @@ export async function endInteraction(interactionId) {
 }
 
 /**
- * Subscribe to live distribution events. Returns a disconnect function.
- * onMessage receives each DashboardMessage; onStatus reports connection state.
+ * Subscribe to live distribution events over native WebSocket (STOMP).
+ * Returns a disconnect function. onMessage receives each DashboardMessage;
+ * onStatus reports 'connected' or 'offline'.
+ *
+ * If the browser refuses the native WebSocket (e.g. Safari on ws://localhost), we stop
+ * retrying after the first failure and let the caller fall back to polling — no error loop.
  */
 export function connectDashboard(onMessage, onStatus) {
+  const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  let everConnected = false
+
   const client = new Client({
-    webSocketFactory: () => new SockJS('/ws'),
-    reconnectDelay: 3000,
+    brokerURL: `${scheme}://${window.location.host}/ws`,
+    reconnectDelay: 4000,
     onConnect: () => {
+      everConnected = true
       onStatus?.('connected')
       client.subscribe('/topic/dashboard', (frame) => onMessage(JSON.parse(frame.body)))
     },
-    onWebSocketClose: () => onStatus?.('disconnected'),
+    onWebSocketClose: () => {
+      onStatus?.('offline')
+      if (!everConnected) client.deactivate()
+    },
   })
+
   client.activate()
   return () => client.deactivate()
 }

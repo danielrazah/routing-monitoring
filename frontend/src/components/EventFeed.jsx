@@ -1,13 +1,17 @@
 import { EVENT_STYLES } from '../lib/subjects.js'
 
-export default function EventFeed({ events }) {
+export default function EventFeed({ events, live }) {
   return (
     <div className="rounded-2xl bg-slate-900/70 p-5 ring-1 ring-slate-800 backdrop-blur">
       <h3 className="text-lg font-semibold">Live feed</h3>
       <p className="mb-4 text-xs text-slate-400">Distribution events, newest first.</p>
 
       {events.length === 0 ? (
-        <p className="text-sm text-slate-500">Waiting for activity…</p>
+        <p className="text-sm text-slate-500">
+          {live
+            ? 'Waiting for activity…'
+            : 'This browser is polling for counts; the event stream needs a WebSocket.'}
+        </p>
       ) : (
         <ul className="space-y-2">
           {events.map((event, i) => (

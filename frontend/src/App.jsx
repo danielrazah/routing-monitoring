@@ -5,6 +5,9 @@ import NewInteractionForm from './components/NewInteractionForm.jsx'
 import EventFeed from './components/EventFeed.jsx'
 import { connectDashboard, fetchSnapshot } from './lib/api.js'
 
+// How often we refresh counters when the live WebSocket isn't available.
+const POLL_INTERVAL_MS = 2500
+
 export default function App() {
   const [teams, setTeams] = useState([])
   const [events, setEvents] = useState([])
@@ -15,13 +18,14 @@ export default function App() {
       const snapshot = await fetchSnapshot()
       setTeams(snapshot.teams)
     } catch {
-      // ignore; the live feed will trigger the next refresh
+      // ignore a transient failure; the next tick/event will refresh
     }
   }
 
   useEffect(() => {
     refresh()
-    // Every event both feeds the timeline and refreshes the counters.
+
+    // Live push where the browser allows it: each event feeds the timeline and refreshes counts.
     const disconnect = connectDashboard(
       (message) => {
         setEvents((prev) => [message, ...prev].slice(0, 30))
@@ -29,7 +33,14 @@ export default function App() {
       },
       setStatus,
     )
-    return disconnect
+
+    // Fallback that works everywhere (Safari included): poll the snapshot on an interval.
+    const poll = setInterval(refresh, POLL_INTERVAL_MS)
+
+    return () => {
+      disconnect()
+      clearInterval(poll)
+    }
   }, [])
 
   return (
@@ -48,7 +59,7 @@ export default function App() {
 
         <aside className="space-y-6">
           <NewInteractionForm />
-          <EventFeed events={events} />
+          <EventFeed events={events} live={status === 'connected'} />
         </aside>
       </div>
     </div>
