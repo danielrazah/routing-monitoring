@@ -1,31 +1,56 @@
 import { Client } from '@stomp/stompjs'
+import { getToken, logout } from './auth.js'
 
 // All calls are same-origin: Vite proxies to the backend in dev, nginx does in prod.
 
+// If a token expires or is rejected, the app drops back to the login screen.
+let onUnauthorized = () => {}
+export function setUnauthorizedHandler(fn) {
+  onUnauthorized = fn
+}
+
+function authHeaders(extra = {}) {
+  const token = getToken()
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra
+}
+
+async function ensureAuthorized(res) {
+  if (res.status === 401 || res.status === 403) {
+    logout()
+    onUnauthorized()
+    throw new Error('Not authorized')
+  }
+  return res
+}
+
 export async function fetchSnapshot() {
-  const res = await fetch('/api/dashboard')
+  const res = await ensureAuthorized(await fetch('/api/dashboard', { headers: authHeaders() }))
   if (!res.ok) throw new Error('Failed to load dashboard')
   return res.json()
 }
 
 export async function createInteraction(customerName, subject) {
-  const res = await fetch('/api/interactions', {
+  const res = await ensureAuthorized(await fetch('/api/interactions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ customerName, subject }),
-  })
+  }))
   if (!res.ok) throw new Error('Failed to create interaction')
   return res.json()
 }
 
 export async function endInteraction(interactionId) {
-  const res = await fetch(`/api/interactions/${interactionId}/end`, { method: 'POST' })
+  const res = await ensureAuthorized(
+    await fetch(`/api/interactions/${interactionId}/end`, { method: 'POST', headers: authHeaders() }),
+  )
   if (!res.ok) throw new Error('Failed to end interaction')
 }
 
 // Free one slot on a team so the next waiting customer is served.
 export async function advanceQueue(teamId) {
-  const res = await fetch(`/api/teams/${teamId}/advance-queue`, { method: 'POST' })
+  const res = await ensureAuthorized(
+    await fetch(`/api/teams/${teamId}/advance-queue`, { method: 'POST', headers: authHeaders() }),
+  )
   if (!res.ok) throw new Error('Failed to advance queue')
 }
 
