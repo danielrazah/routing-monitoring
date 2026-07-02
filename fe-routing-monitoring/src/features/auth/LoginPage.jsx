@@ -36,16 +36,18 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <label className="block text-xs font-medium text-slate-400">{t('login.username')}</label>
+        <label htmlFor="username" className="block text-xs font-medium text-slate-400">{t('login.username')}</label>
         <input
+          id="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           className="mt-1 w-full rounded-xl bg-slate-950/60 px-3 py-2 text-sm ring-1 ring-slate-800 outline-none focus:ring-2 focus:ring-teal-400/60"
         />
 
-        <label className="mt-4 block text-xs font-medium text-slate-400">{t('login.password')}</label>
+        <label htmlFor="password" className="mt-4 block text-xs font-medium text-slate-400">{t('login.password')}</label>
         <input
+          id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

@@ -68,5 +68,6 @@ npm test            # run the unit/component tests once (Vitest + jsdom)
 npm run coverage    # same, plus a coverage report in coverage/index.html
 ```
 
-Tests cover the Zustand stores, the i18n helpers, the HTTP wrapper and key components
-(TeamCard, EventFeed, CapacityMeter). The coverage report (v8) is written to `coverage/`.
+Tests live under `src/test/`, mirroring the `src/` tree, and import source via the `@`
+alias. They cover the stores, i18n, the HTTP client, the realtime + live hooks, the pages
+and the components — line coverage is ~99%. The v8 report is written to `coverage/`.
