@@ -10,7 +10,13 @@ import java.util.UUID;
  */
 public record DashboardSnapshot(List<TeamSnapshot> teams) {
 
-    public record TeamSnapshot(UUID id, String name, long waiting, List<AgentSnapshot> agents) {
+    public record TeamSnapshot(
+            UUID id,
+            String name,
+            long waiting,
+            List<AgentSnapshot> agents,
+            List<String> serving,   // customers being served now, oldest first
+            List<String> queue) {   // customers waiting, in line order
     }
 
     public record AgentSnapshot(UUID id, String name, long currentLoad, int maxConcurrent) {

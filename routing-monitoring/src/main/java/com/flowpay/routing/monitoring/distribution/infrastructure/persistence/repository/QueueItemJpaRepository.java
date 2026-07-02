@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,4 +29,13 @@ public interface QueueItemJpaRepository extends JpaRepository<QueueItemJpaEntity
 
     /** How many customers are currently waiting for a team, for the dashboard snapshot. */
     long countByTeamId(UUID teamId);
+
+    /** Names of the customers waiting for a team, in line order (for the dashboard). */
+    @Query(value = """
+            SELECT i.customer_name FROM interaction_queue q
+            JOIN interaction i ON i.id = q.interaction_id
+            WHERE q.team_id = :teamId
+            ORDER BY q.enqueued_at
+            """, nativeQuery = true)
+    List<String> findQueuedCustomerNamesByTeam(@Param("teamId") UUID teamId);
 }

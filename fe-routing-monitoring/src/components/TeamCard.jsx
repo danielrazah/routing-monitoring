@@ -7,6 +7,8 @@ export default function TeamCard({ team, onServeNext }) {
   const totalCapacity = team.agents.reduce((sum, a) => sum + a.maxConcurrent, 0)
   const [busy, setBusy] = useState(false)
   const hasQueue = team.waiting > 0
+  const serving = team.serving ?? []
+  const queue = team.queue ?? []
 
   async function serveNext() {
     setBusy(true)
@@ -46,6 +48,20 @@ export default function TeamCard({ team, onServeNext }) {
         ))}
       </ul>
 
+      <div className="mt-4 space-y-3 border-t border-slate-800 pt-4">
+        <NameRow
+          label={t('teams.inService')}
+          names={serving}
+          tone="bg-teal-500/15 text-teal-200 ring-teal-500/30"
+        />
+        <NameRow
+          label={t('teams.inQueue')}
+          names={queue}
+          tone="bg-amber-500/15 text-amber-200 ring-amber-500/30"
+          numbered
+        />
+      </div>
+
       <button
         onClick={serveNext}
         disabled={!hasQueue || busy}
@@ -54,6 +70,29 @@ export default function TeamCard({ team, onServeNext }) {
       >
         {t('teams.serveNext')}
       </button>
+    </div>
+  )
+}
+
+function NameRow({ label, names, tone, numbered }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}</p>
+      {names.length === 0 ? (
+        <p className="text-xs text-slate-600">{t('teams.none')}</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {names.map((name, i) => (
+            <span
+              key={`${name}-${i}`}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ring-1 transition ${tone}`}
+            >
+              {numbered && <span className="tabular-nums opacity-60">{i + 1}.</span>}
+              <span className="truncate max-w-[8rem]">{name}</span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
