@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuthStore } from './authStore.js'
 import { t } from '../../shared/i18n/i18n.js'
+import ubotsLogo from '../../assets/ubots-logo.png'
 
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login)
@@ -27,8 +28,8 @@ export default function LoginPage() {
     <div className="grid min-h-screen place-items-center px-6">
       <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-slate-900/70 p-7 ring-1 ring-slate-800 backdrop-blur">
         <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-teal-400 shadow-lg shadow-indigo-500/20">
-            <span className="text-lg font-bold text-slate-950">F</span>
+          <div className="grid h-11 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200">
+            <img src={ubotsLogo} alt="ubots" className="h-6 w-auto" />
           </div>
           <div>
             <h1 className="text-lg font-semibold tracking-tight">{t('login.title')}</h1>

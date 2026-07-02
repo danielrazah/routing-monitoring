@@ -38,11 +38,12 @@ A primeira vez demora alguns minutos (baixa dependências dentro dos containers)
 ## Acesso (login)
 
 O dashboard exige login. Contas de demonstração:
+OBS: Para facilitar a vida de quem vai avaliar, coloquei dois perfis para emular o uso de Roles do spring security.
 
-| Usuário  | Senha      | Perfil                                    |
-|----------|------------|-------------------------------------------|
-| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende fila |
-| `viewer` | `viewer123`| VIEWER — só visualiza o dashboard         |
+| Usuário  | Senha      | Perfil                                                         |
+|----------|------------|----------------------------------------------------------------|
+| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende fila e emula cliente |
+| `viewer` | `viewer123`| VIEWER — só visualiza o dashboard                              |
 
 O `viewer` entra e vê tudo, mas não vê os controles de escrita (formulário e botão
 "Atender próximo").

@@ -1,6 +1,7 @@
 import { t } from '../../../shared/i18n/i18n.js'
 import { useAuthStore } from '../../auth/authStore.js'
 import { useDashboardStore } from '../dashboardStore.js'
+import ubotsLogo from '../../../assets/ubots-logo.png'
 
 const DOTS = {
   connected: 'bg-emerald-400 animate-pulse',
@@ -19,8 +20,8 @@ export default function Header() {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-teal-400 shadow-lg shadow-indigo-500/20">
-          <span className="text-lg font-bold text-slate-950">F</span>
+        <div className="grid h-11 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200">
+          <img src={ubotsLogo} alt="ubots" className="h-6 w-auto" />
         </div>
         <div>
           <h1 className="text-xl font-semibold tracking-tight">FlowPay · Routing Monitoring</h1>
