@@ -15,6 +15,12 @@ describe('App', () => {
   // Some tests navigate; always return to the root path afterwards.
   afterEach(() => window.history.pushState({}, '', '/'))
 
+  it('shows the landing screen on the root path', () => {
+    useAuthStore.setState({ token: null, username: null, roles: [] })
+    render(<App />)
+    expect(screen.getByText('How can we help you today?')).toBeInTheDocument()
+  })
+
   it('shows the customer queue screen on the /atendimento path', () => {
     window.history.pushState({}, '', '/atendimento')
     useAuthStore.setState({ token: null, username: null, roles: [] })
@@ -22,13 +28,15 @@ describe('App', () => {
     expect(screen.getByText('Talk to us')).toBeInTheDocument()
   })
 
-  it('shows the login screen when unauthenticated', () => {
+  it('shows the login screen on /painel when unauthenticated', () => {
+    window.history.pushState({}, '', '/painel')
     useAuthStore.setState({ token: null, username: null, roles: [] })
     render(<App />)
     expect(screen.getByText('Access the routing dashboard')).toBeInTheDocument()
   })
 
-  it('shows the dashboard when authenticated', () => {
+  it('shows the dashboard on /painel when authenticated', () => {
+    window.history.pushState({}, '', '/painel')
     useAuthStore.setState({ token: 'x', username: 'admin', roles: ['ADMIN'] })
     useDashboardStore.setState({ teams: [], events: [], status: 'connected' })
     render(<App />)

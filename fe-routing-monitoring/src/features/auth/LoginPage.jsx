@@ -67,8 +67,10 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-5 text-center text-[11px] text-slate-500">{t('login.demo')}</p>
-        <p className="mt-2 text-center text-[11px]">
+        <p className="mt-2 flex items-center justify-center gap-3 text-[11px]">
           <a href="/atendimento" className="text-teal-400 hover:underline">{t('login.customerCta')}</a>
+          <span className="text-slate-700">·</span>
+          <a href="/" className="text-slate-500 hover:text-slate-300">← {t('nav.home')}</a>
         </p>
       </form>
     </div>

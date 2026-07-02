@@ -3,6 +3,20 @@
 
 const DICTS = {
   en: {
+    'nav.home': 'Home',
+
+    'landing.tagline': 'Real-time customer routing',
+    'landing.title': 'How can we help you today?',
+    'landing.subtitle': 'Choose how you’d like to continue.',
+    'landing.customer.title': 'I’m a customer',
+    'landing.customer.desc': 'Join the queue and talk to an agent — no login needed.',
+    'landing.customer.cta': 'Get served',
+    'landing.team.title': 'I’m on the team',
+    'landing.team.descIn': 'Open the live routing dashboard.',
+    'landing.team.descOut': 'Sign in to the routing dashboard.',
+    'landing.team.ctaIn': 'Go to dashboard',
+    'landing.team.ctaOut': 'Team sign in',
+
     'header.subtitle': 'Live view of how customer contacts are distributed',
     'header.logout': 'Log out',
     'login.title': 'Sign in',
@@ -77,6 +91,20 @@ const DICTS = {
     'feed.someTeam': 'a team',
   },
   pt: {
+    'nav.home': 'Início',
+
+    'landing.tagline': 'Distribuição de atendimentos em tempo real',
+    'landing.title': 'Como podemos te ajudar hoje?',
+    'landing.subtitle': 'Escolha como você quer continuar.',
+    'landing.customer.title': 'Sou cliente',
+    'landing.customer.desc': 'Entre na fila e fale com um atendente — sem precisar de login.',
+    'landing.customer.cta': 'Ser atendido',
+    'landing.team.title': 'Sou da equipe',
+    'landing.team.descIn': 'Abrir o painel de distribuição ao vivo.',
+    'landing.team.descOut': 'Entrar no painel de distribuição.',
+    'landing.team.ctaIn': 'Ir para o dashboard',
+    'landing.team.ctaOut': 'Entrar (equipe)',
+
     'header.subtitle': 'Visão em tempo real da distribuição de atendimentos',
     'header.logout': 'Sair',
     'login.title': 'Entrar',
