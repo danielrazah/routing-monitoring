@@ -9,6 +9,7 @@ import com.flowpay.routing.monitoring.distribution.domain.exception.QueueAdvance
 import com.flowpay.routing.monitoring.distribution.domain.exception.TeamNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -37,6 +38,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(NoTeamForSubjectException.class)
     public ProblemDetail handleUnprocessable(RuntimeException ex) {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot route interaction", ex.getMessage());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthentication(AuthenticationException ex) {
+        return problem(HttpStatus.UNAUTHORIZED, "Authentication failed", "Invalid username or password");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

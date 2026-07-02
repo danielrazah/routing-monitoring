@@ -36,6 +36,10 @@ dependencies {
 	// OpenAPI docs + Scalar API reference UI (springdoc 3.x targets Spring Boot 4).
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.0.3")
 
+	// Security: stateless JWT auth (resource server issues/validates HMAC tokens with Nimbus).
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	// Spring Boot 4.1's BOM doesn't manage the Testcontainers modules, so pin them here.
