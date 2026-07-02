@@ -76,6 +76,7 @@ tasks.jacocoTestReport {
 				exclude(
 					"**/RoutingMonitoringApplication.class",
 					"**/infrastructure/config/**",
+					"**/infrastructure/persistence/entity/**",
 				)
 			}
 		}

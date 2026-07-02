@@ -34,4 +34,10 @@ class WaitingQueueTest {
         assertTrue(queue.dequeue().isEmpty());
         assertFalse(queue.dequeue().isPresent());
     }
+
+    @Test
+    void remembersItsTeam() {
+        UUID team = UUID.randomUUID();
+        assertEquals(team, new WaitingQueue(team).teamId());
+    }
 }

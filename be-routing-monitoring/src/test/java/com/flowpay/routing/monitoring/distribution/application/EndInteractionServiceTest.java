@@ -1,5 +1,6 @@
 package com.flowpay.routing.monitoring.distribution.application;
 
+import com.flowpay.routing.monitoring.distribution.domain.exception.AgentNotFoundException;
 import com.flowpay.routing.monitoring.distribution.domain.exception.InteractionNotFoundException;
 import com.flowpay.routing.monitoring.distribution.domain.model.Agent;
 import com.flowpay.routing.monitoring.distribution.domain.model.Interaction;
@@ -91,5 +92,15 @@ class EndInteractionServiceTest {
         UUID id = UUID.randomUUID();
         when(interactions.findById(id)).thenReturn(Optional.empty());
         assertThrows(InteractionNotFoundException.class, () -> service.handle(id));
+    }
+
+    @Test
+    void failsWhenTheAssignedAgentIsMissing() {
+        UUID currentId = UUID.randomUUID();
+        UUID agentId = UUID.randomUUID();
+        when(interactions.findById(currentId)).thenReturn(Optional.of(inService(currentId, agentId)));
+        when(agents.findById(agentId)).thenReturn(Optional.empty());
+
+        assertThrows(AgentNotFoundException.class, () -> service.handle(currentId));
     }
 }
