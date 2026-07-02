@@ -61,4 +61,17 @@ class AgentTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new Agent(UUID.randomUUID(), "Ana", TEAM, 0, Set.of()));
     }
+
+    @Test
+    void exposesItsIdentityAndActiveCases() {
+        UUID id = UUID.randomUUID();
+        Agent agent = new Agent(id, "Ana", TEAM);
+        Interaction interaction = newInteraction();
+        agent.assign(interaction);
+
+        assertEquals(id, agent.id());
+        assertEquals("Ana", agent.name());
+        assertEquals(TEAM, agent.teamId());
+        assertTrue(agent.activeInteractionIds().contains(interaction.id()));
+    }
 }

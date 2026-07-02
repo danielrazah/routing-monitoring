@@ -85,6 +85,8 @@ docker compose down -v    # também apaga os dados do Postgres
 cd be-routing-monitoring
 ./gradlew bootRun        # sobe a API
 ./gradlew test           # testes (o de integração usa Testcontainers + Docker)
+                         # gera também o relatório de cobertura (JaCoCo) em
+                         # build/reports/jacoco/test/html/index.html
 ```
 
 **Frontend** (precisa de Node 20):
@@ -92,5 +94,10 @@ cd be-routing-monitoring
 ```bash
 cd fe-routing-monitoring
 npm install
-npm run dev              # dev server em http://localhost:8090, com proxy para o backend
+npm run dev         # dev server em http://localhost:8090, com proxy para o backend
+npm test            # roda os testes uma vez (Vitest + jsdom)
+npm run coverage    # idem, com relatório de cobertura em coverage/index.html
 ```
+
+Os testes ficam em `src/test/` espelhando a árvore de `src/`. Cobertura de linhas ~100%
+no backend e ~99% no frontend.
