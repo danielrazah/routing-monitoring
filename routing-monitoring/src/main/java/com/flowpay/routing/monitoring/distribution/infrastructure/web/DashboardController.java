@@ -9,6 +9,8 @@ import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.re
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.DashboardSnapshot;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.DashboardSnapshot.AgentSnapshot;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.DashboardSnapshot.TeamSnapshot;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * It's a straight query with no domain rules, so — pragmatically — it reads the JPA
  * repositories directly instead of going through a use-case port.
  */
+@Tag(name = "Dashboard", description = "Read-only view of the whole operation")
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {
@@ -37,6 +40,8 @@ public class DashboardController {
         this.queue = queue;
     }
 
+    @Operation(summary = "Current snapshot",
+            description = "Teams with their agents' load, plus who is in service and who is waiting.")
     @GetMapping
     public DashboardSnapshot snapshot() {
         var teamSnapshots = teams.findAll().stream()
