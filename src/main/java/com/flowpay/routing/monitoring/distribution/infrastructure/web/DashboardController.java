@@ -1,0 +1,58 @@
+package com.flowpay.routing.monitoring.distribution.infrastructure.web;
+
+import com.flowpay.routing.monitoring.distribution.domain.model.Agent;
+import com.flowpay.routing.monitoring.distribution.domain.model.InteractionState;
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.AgentJpaRepository;
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.InteractionJpaRepository;
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.QueueItemJpaRepository;
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.TeamJpaRepository;
+import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.DashboardSnapshot;
+import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.DashboardSnapshot.AgentSnapshot;
+import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.DashboardSnapshot.TeamSnapshot;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Read-only endpoint that returns the current state of every team, agent and queue.
+ * It's a straight query with no domain rules, so — pragmatically — it reads the JPA
+ * repositories directly instead of going through a use-case port.
+ */
+@RestController
+@RequestMapping("/api/dashboard")
+public class DashboardController {
+
+    private final TeamJpaRepository teams;
+    private final AgentJpaRepository agents;
+    private final InteractionJpaRepository interactions;
+    private final QueueItemJpaRepository queue;
+
+    public DashboardController(TeamJpaRepository teams,
+                               AgentJpaRepository agents,
+                               InteractionJpaRepository interactions,
+                               QueueItemJpaRepository queue) {
+        this.teams = teams;
+        this.agents = agents;
+        this.interactions = interactions;
+        this.queue = queue;
+    }
+
+    @GetMapping
+    public DashboardSnapshot snapshot() {
+        var teamSnapshots = teams.findAll().stream()
+                .map(team -> new TeamSnapshot(
+                        team.getId(),
+                        team.getName(),
+                        queue.countByTeamId(team.getId()),
+                        agents.findByTeamId(team.getId()).stream()
+                                .map(agent -> new AgentSnapshot(
+                                        agent.getId(),
+                                        agent.getName(),
+                                        interactions.countByAssignedAgentIdAndState(
+                                                agent.getId(), InteractionState.IN_SERVICE.name()),
+                                        Agent.MAX_CONCURRENT))
+                                .toList()))
+                .toList();
+        return new DashboardSnapshot(teamSnapshots);
+    }
+}
