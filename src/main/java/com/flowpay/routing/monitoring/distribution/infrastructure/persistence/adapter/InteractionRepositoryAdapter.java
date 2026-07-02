@@ -28,4 +28,9 @@ public class InteractionRepositoryAdapter implements InteractionRepository {
     public Optional<Interaction> findById(UUID id) {
         return jpa.findById(id).map(InteractionMapper::toDomain);
     }
+
+    @Override
+    public Optional<Interaction> findOldestInServiceByTeam(UUID teamId) {
+        return jpa.findOldestInServiceByTeam(teamId).map(InteractionMapper::toDomain);
+    }
 }

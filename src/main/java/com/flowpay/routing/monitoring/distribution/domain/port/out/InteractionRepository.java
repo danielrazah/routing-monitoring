@@ -11,4 +11,7 @@ public interface InteractionRepository {
     Interaction save(Interaction interaction);
 
     Optional<Interaction> findById(UUID id);
+
+    /** The team's longest-running ongoing interaction, if any (used to free a slot). */
+    Optional<Interaction> findOldestInServiceByTeam(UUID teamId);
 }

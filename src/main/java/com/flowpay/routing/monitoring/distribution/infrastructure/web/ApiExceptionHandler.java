@@ -5,6 +5,7 @@ import com.flowpay.routing.monitoring.distribution.domain.exception.AgentNotFoun
 import com.flowpay.routing.monitoring.distribution.domain.exception.IllegalInteractionStateException;
 import com.flowpay.routing.monitoring.distribution.domain.exception.InteractionNotFoundException;
 import com.flowpay.routing.monitoring.distribution.domain.exception.NoTeamForSubjectException;
+import com.flowpay.routing.monitoring.distribution.domain.exception.QueueAdvanceNotPossibleException;
 import com.flowpay.routing.monitoring.distribution.domain.exception.TeamNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -27,7 +28,8 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.NOT_FOUND, "Not found", ex.getMessage());
     }
 
-    @ExceptionHandler({AgentAtCapacityException.class, IllegalInteractionStateException.class})
+    @ExceptionHandler({AgentAtCapacityException.class, IllegalInteractionStateException.class,
+            QueueAdvanceNotPossibleException.class})
     public ProblemDetail handleConflict(RuntimeException ex) {
         return problem(HttpStatus.CONFLICT, "Business rule violated", ex.getMessage());
     }

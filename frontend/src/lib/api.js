@@ -23,6 +23,12 @@ export async function endInteraction(interactionId) {
   if (!res.ok) throw new Error('Failed to end interaction')
 }
 
+// Free one slot on a team so the next waiting customer is served.
+export async function advanceQueue(teamId) {
+  const res = await fetch(`/api/teams/${teamId}/advance-queue`, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to advance queue')
+}
+
 /**
  * Subscribe to live distribution events over native WebSocket (STOMP).
  * Returns a disconnect function. onMessage receives each DashboardMessage;
