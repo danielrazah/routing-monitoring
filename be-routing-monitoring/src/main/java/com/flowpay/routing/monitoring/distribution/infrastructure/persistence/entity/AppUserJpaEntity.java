@@ -7,7 +7,10 @@ import jakarta.persistence.Table;
 
 import java.util.UUID;
 
-/** A login account. Its role (ADMIN/VIEWER) decides what the user may do. */
+/**
+ * A login account. Its role decides what the user may do: ADMIN operates everything, AGENT
+ * only reads the dashboard of the team it belongs to ({@link #teamId}, null for ADMIN).
+ */
 @Entity
 @Table(name = "app_user")
 public class AppUserJpaEntity {
@@ -23,6 +26,10 @@ public class AppUserJpaEntity {
 
     @Column(nullable = false)
     private String role;
+
+    /** The team an AGENT belongs to; null for ADMIN (who sees every team). */
+    @Column(name = "team_id")
+    private UUID teamId;
 
     @Column(nullable = false)
     private boolean enabled;
@@ -45,6 +52,10 @@ public class AppUserJpaEntity {
 
     public String getRole() {
         return role;
+    }
+
+    public UUID getTeamId() {
+        return teamId;
     }
 
     public boolean isEnabled() {

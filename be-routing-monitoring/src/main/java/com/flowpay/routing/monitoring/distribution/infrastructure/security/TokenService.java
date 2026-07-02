@@ -23,17 +23,20 @@ public class TokenService {
         this.ttlSeconds = ttlSeconds;
     }
 
-    public String issue(String username, List<String> roles) {
+    public String issue(String username, List<String> roles, String teamId) {
         Instant now = Instant.now();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
                 .issuer("routing-monitoring")
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ttlSeconds))
                 .subject(username)
-                .claim("roles", roles)
-                .build();
+                .claim("roles", roles);
+        // AGENT tokens carry the team they may see; the dashboard reads this to scope the view.
+        if (teamId != null) {
+            claims.claim("teamId", teamId);
+        }
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
-        return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+        return encoder.encode(JwtEncoderParameters.from(header, claims.build())).getTokenValue();
     }
 
     public long ttlSeconds() {

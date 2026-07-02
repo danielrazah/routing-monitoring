@@ -1,5 +1,6 @@
 package com.flowpay.routing.monitoring.distribution.infrastructure.security;
 
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.AppUserJpaRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 /** Exchanges username/password for a JWT that carries the user's roles. */
 @Tag(name = "Auth", description = "Login and token issuance")
@@ -22,10 +24,14 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
+    private final AppUserJpaRepository users;
 
-    public AuthController(AuthenticationManager authenticationManager, TokenService tokenService) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          TokenService tokenService,
+                          AppUserJpaRepository users) {
         this.authenticationManager = authenticationManager;
         this.tokenService = tokenService;
+        this.users = users;
     }
 
     @Operation(summary = "Log in", description = "Returns a JWT to send as 'Authorization: Bearer <token>'.")
@@ -41,13 +47,20 @@ public class AuthController {
                 .map(a -> a.substring("ROLE_".length()))
                 .toList();
 
-        String token = tokenService.issue(authentication.getName(), roles);
-        return new LoginResponse(token, authentication.getName(), roles, tokenService.ttlSeconds());
+        // An AGENT is tied to a team; carry it in the token so the dashboard scopes to it.
+        UUID teamId = users.findByUsername(authentication.getName())
+                .map(user -> user.getTeamId())
+                .orElse(null);
+        String teamIdClaim = teamId != null ? teamId.toString() : null;
+
+        String token = tokenService.issue(authentication.getName(), roles, teamIdClaim);
+        return new LoginResponse(token, authentication.getName(), roles, teamIdClaim, tokenService.ttlSeconds());
     }
 
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {
     }
 
-    public record LoginResponse(String token, String username, List<String> roles, long expiresInSeconds) {
+    public record LoginResponse(String token, String username, List<String> roles, String teamId,
+                                long expiresInSeconds) {
     }
 }

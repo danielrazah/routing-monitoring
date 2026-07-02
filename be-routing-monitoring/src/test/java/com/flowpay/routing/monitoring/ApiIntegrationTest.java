@@ -157,11 +157,23 @@ class ApiIntegrationTest {
     }
 
     @Test
-    void viewerCannotMutate() throws Exception {
-        String token = login("viewer", "viewer123");
+    void agentCanReadButCannotMutate() throws Exception {
+        String token = login("carla", "agent123");
         assertEquals(200, send("GET", "/api/dashboard", token, null).status());
         assertEquals(403, send("POST", "/api/interactions", token,
                 "{\"customerName\":\"Maria\",\"subject\":\"OTHER\"}").status());
+    }
+
+    @Test
+    void agentDashboardShowsOnlyItsOwnTeam() throws Exception {
+        // Admin sees all three teams; carla is an AGENT on Loans and sees only Loans.
+        assertEquals(3, json.readTree(send("GET", "/api/dashboard", login("admin", "admin123"), null).body())
+                .get("teams").size());
+
+        JsonNode teams = json.readTree(send("GET", "/api/dashboard", login("carla", "agent123"), null).body())
+                .get("teams");
+        assertEquals(1, teams.size());
+        assertEquals("Loans", teams.get(0).get("name").asText());
     }
 
     @Test

@@ -33,9 +33,9 @@ describe('authStore', () => {
   it('clears everything on logout', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ token: 'jwt-123', username: 'viewer', roles: ['VIEWER'] }),
+      json: async () => ({ token: 'jwt-123', username: 'carla', roles: ['AGENT'] }),
     })
-    await useAuthStore.getState().login('viewer', 'viewer123')
+    await useAuthStore.getState().login('carla', 'agent123')
 
     useAuthStore.getState().logout()
 
