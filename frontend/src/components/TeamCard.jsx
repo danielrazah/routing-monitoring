@@ -1,4 +1,5 @@
 import CapacityMeter from './CapacityMeter.jsx'
+import { t, tv } from '../lib/i18n.js'
 
 export default function TeamCard({ team }) {
   const totalLoad = team.agents.reduce((sum, a) => sum + a.currentLoad, 0)
@@ -8,9 +9,9 @@ export default function TeamCard({ team }) {
     <div className="rounded-2xl bg-slate-900/70 p-5 ring-1 ring-slate-800 backdrop-blur transition hover:ring-slate-700">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">{team.name}</h3>
+          <h3 className="text-lg font-semibold">{tv('team', team.name)}</h3>
           <p className="text-xs text-slate-400">
-            {totalLoad}/{totalCapacity} slots in use
+            {t('teams.slots', { used: totalLoad, total: totalCapacity })}
           </p>
         </div>
         <WaitingBadge count={team.waiting} />
@@ -18,7 +19,7 @@ export default function TeamCard({ team }) {
 
       <ul className="mt-4 space-y-3">
         {team.agents.length === 0 && (
-          <li className="text-sm text-slate-500">No agents on this team.</li>
+          <li className="text-sm text-slate-500">{t('teams.noAgents')}</li>
         )}
         {team.agents.map((agent) => (
           <li key={agent.id} className="flex items-center justify-between gap-3">
@@ -46,7 +47,7 @@ function WaitingBadge({ count }) {
           : 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30'
       }`}
     >
-      {waiting ? `${count} waiting` : 'No queue'}
+      {waiting ? t('teams.waiting', { count }) : t('teams.noQueue')}
     </span>
   )
 }
