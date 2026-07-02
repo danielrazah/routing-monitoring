@@ -20,7 +20,7 @@ services:
       retries: 10
 
   backend:
-    build: ./routing-monitoring
+    build: ./be-routing-monitoring
     depends_on:
       db:
         condition: service_healthy
