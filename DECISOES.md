@@ -54,10 +54,12 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
 - **Strategy para roteamento (Open/Closed).** Cada time é uma `RoutingStrategy`. Um time
   novo = uma classe nova + uma linha de `@Bean`; nada existente muda.
 
+
 - **A fila é uma tabela no Postgres, não um broker.** A fila é regra de negócio: ordenada,
   persistente, por time. Consumimos com `SELECT ... FOR UPDATE SKIP LOCKED`, o que dá
   consumo concorrente seguro (dois atendentes terminando juntos nunca pegam o mesmo
   cliente) sem precisar subir RabbitMQ/ActiveMQ só para isso.
+
 
 - **Eventos de domínio desacoplam as pontas.** O núcleo publica por um port `EventPublisher`;
   um adapter Spring joga no event bus e um listener converte em mensagem WebSocket **depois
