@@ -69,7 +69,8 @@ export default function CustomerPage() {
 
   return (
     <div className="grid min-h-screen place-items-center px-6">
-      <div className="w-full max-w-sm rounded-2xl bg-slate-900/70 p-7 ring-1 ring-slate-800 backdrop-blur">
+      <div className="w-full max-w-sm">
+        <div className="rounded-2xl bg-slate-900/70 p-7 ring-1 ring-slate-800 backdrop-blur">
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-11 place-items-center rounded-2xl bg-white px-3 shadow-lg shadow-black/20 ring-1 ring-slate-200">
             <img src={ubotsLogo} alt="ubots" className="h-6 w-auto" />
@@ -142,6 +143,10 @@ export default function CustomerPage() {
             </button>
           </div>
         )}
+        </div>
+        <p className="mt-4 text-center text-[11px]">
+          <a href="/" className="text-slate-500 hover:text-slate-300">← {t('nav.home')}</a>
+        </p>
       </div>
     </div>
   )
