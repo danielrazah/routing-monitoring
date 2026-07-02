@@ -27,6 +27,11 @@ docker compose up --build
 
 A primeira vez demora alguns minutos (baixa dependências dentro dos containers).
 
+Por padrão, a stack sobe **pronta para escala horizontal**: o tempo real usa um broker STOMP
+(**RabbitMQ**), de modo que várias instâncias do backend possam compartilhar os mesmos eventos.
+Quem quiser o modo enxuto de uma instância só (broker em memória, sem RabbitMQ no caminho) usa o
+**modo simple**, logo abaixo. O porquê está no `DECISOES.md`.
+
 | Serviço          | URL                              |
 |------------------|----------------------------------|
 | Dashboard        | http://localhost:8090            |
@@ -34,6 +39,7 @@ A primeira vez demora alguns minutos (baixa dependências dentro dos containers)
 | Docs REST (Scalar) | http://localhost:8080/scalar   |
 | Health           | http://localhost:8080/actuator/health |
 | Postgres         | localhost:5432 (`routing` / `routing`) |
+| RabbitMQ (broker + STOMP) | painel em http://localhost:15672 (`guest` / `guest`) |
 
 ## Acesso (login)
 
@@ -78,24 +84,22 @@ docker compose down       # para os containers
 docker compose down -v    # também apaga os dados do Postgres
 ```
 
-## Rodar em modo broker (escala horizontal, opcional)
+## Modo simple (uma instância, opcional)
 
-Por padrão o tempo real usa um broker STOMP **em memória** (`distribution.realtime.transport=simple`),
-perfeito para uma instância. Para várias instâncias do backend compartilharem os eventos, dá
-para trocar o transporte por um **broker externo** (RabbitMQ) — assim um evento gerado em
-qualquer instância chega aos dashboards conectados a todas elas. Detalhes do porquê no
-`DECISOES.md`.
+O padrão é o transporte por **broker** (RabbitMQ), pensado para escala horizontal. Se você quer
+só rodar local com uma instância, sem depender do broker no caminho, use o **modo simple** — um
+broker STOMP **em memória**:
 
 ```bash
-# sobe também o RabbitMQ (profile "broker") e liga o relay no backend
-REALTIME_TRANSPORT=broker docker compose --profile broker up --build
+REALTIME_TRANSPORT=simple docker compose up --build
 ```
 
-- RabbitMQ (STOMP na porta 61613) e o management UI em http://localhost:15672 (`guest`/`guest`).
-- Sem a variável e sem o profile, o `docker compose up` normal continua idêntico ao de sempre
-  (in-memory, sem RabbitMQ).
-- Escalar de fato (`--scale backend=N`) pede um load balancer na frente e remover o mapeamento
-  fixo da porta 8080 — fora do escopo aqui; o ponto é que o transporte já suporta.
+- Nesse modo o backend ignora o RabbitMQ (o container ainda sobe, mas fica ocioso).
+- Sem a variável, o `docker compose up` padrão usa o broker (escala horizontal).
+
+> **Sobre escalar de fato:** subir várias réplicas (`--scale backend=N`) pede um load balancer na
+> frente e remover o mapeamento fixo da porta 8080 — fora do escopo aqui. O ponto é que, com o
+> broker como padrão, o **transporte de eventos já suporta** várias instâncias.
 
 ## Rodar sem Docker (opcional)
 

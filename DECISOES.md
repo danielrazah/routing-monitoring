@@ -65,23 +65,29 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
   um adapter Spring joga no event bus e um listener converte em mensagem WebSocket **depois
   do commit**. O domínio não sabe que WebSocket existe.
 
-- **Transporte do tempo real é plugável (pensando em escala horizontal).** O push para o
-  dashboard é STOMP sobre WebSocket, e o *broker* que serve o `/topic` é escolhido por
-  propriedade `distribution.realtime.transport`:
-  - `simple` (padrão): broker **em memória**. Zero infra extra, ideal para uma instância —
-    é o cenário atual. A contrapartida é que cada instância só alcança os dashboards
-    conectados a ela mesma.
-  - `broker`: faz **relay do `/topic` para um broker STOMP externo** (ex.: RabbitMQ). Assim
+- **Transporte do tempo real é plugável, com o broker como padrão (pensando em escala
+  horizontal).** O push para o dashboard é STOMP sobre WebSocket, e o *broker* que serve o
+  `/topic` é escolhido por propriedade `distribution.realtime.transport`:
+  - `broker`: faz **relay do `/topic` para um broker STOMP externo** (RabbitMQ). Assim
     **N instâncias do backend compartilham o mesmo tópico** — um evento gerado em qualquer
     instância chega aos dashboards conectados a *todas* elas. É isso que viabiliza rodar o
-    backend atrás de um load balancer com várias réplicas (**escala horizontal**).
+    backend atrás de um load balancer com várias réplicas (**escala horizontal**). É o
+    **padrão ao subir com Docker** (`docker compose up` já sobe o RabbitMQ e liga o relay).
+  - `simple`: broker **em memória**. Zero infra extra, ideal para uma instância; cada
+    instância só alcança os dashboards conectados a ela mesma. Fica como **opção** para
+    rodar enxuto (`REALTIME_TRANSPORT=simple docker compose up`).
+
+  Os dois defaults são propositalmente diferentes: **no Docker o padrão é `broker`** (stack
+  pronta para escalar); **na aplicação** (`application.properties`, usado em `gradlew bootRun`
+  e nos testes) o default é `simple`, para não exigir um broker no desenvolvimento local nem
+  na suíte de testes.
 
   O ponto-chave é que **nada** no código que publica muda (`DashboardNotifier`,
   `SimpMessagingTemplate`) e o **frontend também não muda** — só a configuração do broker.
   A fila de atendimento **continua no Postgres** (`SKIP LOCKED`): o broker aqui é só o
   transporte de notificações em tempo real, não a linha de espera (ver a decisão acima sobre
-  por que a fila é uma tabela, e não um broker). No `docker-compose.yml` há um RabbitMQ
-  opcional sob o profile `broker`; ver *Rodar em modo broker* no `COMO-SUBIR.md`.
+  por que a fila é uma tabela, e não um broker). Ver *Modo simple (opcional)* no
+  `COMO-SUBIR.md`.
 
 - **Spring direto na infraestrutura.** Controllers, repositórios JPA e o endpoint de
   snapshot são Spring puro. O snapshot é só uma consulta (sem regra), então lê os
