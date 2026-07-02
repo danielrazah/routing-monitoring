@@ -7,7 +7,7 @@ com um comando via Docker Compose.
 
 ```
 .
-├── routing-monitoring/      # backend — Spring Boot 4.1 / Java 21
+├── be-routing-monitoring/   # backend — Spring Boot 4.1 / Java 21
 ├── fe-routing-monitoring/   # frontend — React + Vite + Tailwind
 └── docker-compose.yml       # sobe banco + backend + frontend juntos
 ```
@@ -82,7 +82,7 @@ docker compose down -v    # também apaga os dados do Postgres
 **Backend** (precisa de JDK 21 e um Postgres em `localhost:5432`):
 
 ```bash
-cd routing-monitoring
+cd be-routing-monitoring
 ./gradlew bootRun        # sobe a API
 ./gradlew test           # testes (o de integração usa Testcontainers + Docker)
 ```
