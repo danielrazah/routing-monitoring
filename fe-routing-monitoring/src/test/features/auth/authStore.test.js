@@ -1,15 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { useAuthStore } from './authStore.js'
+import { useAuthStore } from '@/features/auth/authStore.js'
 
 describe('authStore', () => {
   beforeEach(() => {
     useAuthStore.getState().logout()
     localStorage.clear()
   })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
+  afterEach(() => vi.restoreAllMocks())
 
   it('stores token, username and roles on a successful login', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
@@ -17,8 +14,9 @@ describe('authStore', () => {
       json: async () => ({ token: 'jwt-123', username: 'admin', roles: ['ADMIN'] }),
     })
 
-    await useAuthStore.getState().login('admin', 'admin123')
+    const data = await useAuthStore.getState().login('admin', 'admin123')
 
+    expect(data.token).toBe('jwt-123')
     const state = useAuthStore.getState()
     expect(state.token).toBe('jwt-123')
     expect(state.username).toBe('admin')

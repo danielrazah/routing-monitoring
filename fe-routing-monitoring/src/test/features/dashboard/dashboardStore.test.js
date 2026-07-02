@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-// Stub the API module so the store logic is tested in isolation.
-vi.mock('./api.js', () => ({
+vi.mock('@/features/dashboard/api.js', () => ({
   fetchSnapshot: vi.fn(),
   advanceQueue: vi.fn(),
 }))
 
-import { useDashboardStore } from './dashboardStore.js'
-import { fetchSnapshot, advanceQueue } from './api.js'
+import { useDashboardStore } from '@/features/dashboard/dashboardStore.js'
+import { fetchSnapshot, advanceQueue } from '@/features/dashboard/api.js'
 
 describe('dashboardStore', () => {
   beforeEach(() => {
