@@ -3,6 +3,7 @@ package com.flowpay.routing.monitoring.distribution.infrastructure.persistence.a
 import com.flowpay.routing.monitoring.distribution.domain.model.Agent;
 import com.flowpay.routing.monitoring.distribution.domain.model.InteractionState;
 import com.flowpay.routing.monitoring.distribution.domain.port.out.AgentRepository;
+import com.flowpay.routing.monitoring.distribution.infrastructure.config.DistributionProperties;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.entity.AgentJpaEntity;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.entity.InteractionJpaEntity;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.mapper.AgentMapper;
@@ -23,13 +24,16 @@ public class AgentRepositoryAdapter implements AgentRepository {
     private final AgentJpaRepository agents;
     private final TeamJpaRepository teams;
     private final InteractionJpaRepository interactions;
+    private final DistributionProperties properties;
 
     public AgentRepositoryAdapter(AgentJpaRepository agents,
                                   TeamJpaRepository teams,
-                                  InteractionJpaRepository interactions) {
+                                  InteractionJpaRepository interactions,
+                                  DistributionProperties properties) {
         this.agents = agents;
         this.teams = teams;
         this.interactions = interactions;
+        this.properties = properties;
     }
 
     @Override
@@ -61,6 +65,6 @@ public class AgentRepositoryAdapter implements AgentRepository {
                 .stream()
                 .map(InteractionJpaEntity::getId)
                 .collect(Collectors.toSet());
-        return AgentMapper.toDomain(entity, active);
+        return AgentMapper.toDomain(entity, properties.getMaxConcurrentPerAgent(), active);
     }
 }

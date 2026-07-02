@@ -11,34 +11,41 @@ import java.util.UUID;
  * A person on a team who serves customers.
  *
  * The heart of the distribution rule lives here: an agent handles at most
- * {@link #MAX_CONCURRENT} interactions at the same time. Because capacity is
- * checked inside {@link #assign}, there is no way to overload an agent from the outside.
+ * {@code maxConcurrent} interactions at the same time. That limit is configurable
+ * (see the {@code distribution.max-concurrent-per-agent} property); it defaults to
+ * {@link #DEFAULT_MAX_CONCURRENT}. Because capacity is checked inside {@link #assign},
+ * there is no way to overload an agent from the outside.
  */
 public class Agent {
 
-    /** How many customers a single agent can serve simultaneously. */
-    public static final int MAX_CONCURRENT = 3;
+    /** Default number of customers a single agent can serve at once. */
+    public static final int DEFAULT_MAX_CONCURRENT = 3;
 
     private final UUID id;
     private final String name;
     private final UUID teamId;
+    private final int maxConcurrent;
     private final Set<UUID> activeInteractionIds; // the cases currently in this agent's hands
 
     public Agent(UUID id, String name, UUID teamId) {
-        this(id, name, teamId, new HashSet<>());
+        this(id, name, teamId, DEFAULT_MAX_CONCURRENT, new HashSet<>());
     }
 
     /** Rebuild an agent from stored data, including the cases they are already serving. */
-    public Agent(UUID id, String name, UUID teamId, Set<UUID> activeInteractionIds) {
+    public Agent(UUID id, String name, UUID teamId, int maxConcurrent, Set<UUID> activeInteractionIds) {
         this.id = Objects.requireNonNull(id, "id");
         this.name = Objects.requireNonNull(name, "name");
         this.teamId = Objects.requireNonNull(teamId, "teamId");
+        if (maxConcurrent < 1) {
+            throw new IllegalArgumentException("maxConcurrent must be at least 1");
+        }
+        this.maxConcurrent = maxConcurrent;
         this.activeInteractionIds = new HashSet<>(activeInteractionIds);
     }
 
     /** True while the agent still has room for one more customer. */
     public boolean hasFreeSlot() {
-        return activeInteractionIds.size() < MAX_CONCURRENT;
+        return activeInteractionIds.size() < maxConcurrent;
     }
 
     /** How many customers the agent is serving right now. */
@@ -49,7 +56,7 @@ public class Agent {
     /** Take on a customer. Refuses if the agent is already at the limit. */
     public void assign(Interaction interaction) {
         if (!hasFreeSlot()) {
-            throw new AgentAtCapacityException(id, MAX_CONCURRENT);
+            throw new AgentAtCapacityException(id, maxConcurrent);
         }
         interaction.startWith(id);
         activeInteractionIds.add(interaction.id());
@@ -70,6 +77,10 @@ public class Agent {
 
     public UUID teamId() {
         return teamId;
+    }
+
+    public int maxConcurrent() {
+        return maxConcurrent;
     }
 
     public Set<UUID> activeInteractionIds() {

@@ -6,6 +6,7 @@ import com.flowpay.routing.monitoring.distribution.domain.routing.OtherSubjectsR
 import com.flowpay.routing.monitoring.distribution.domain.routing.RoutingStrategy;
 import com.flowpay.routing.monitoring.distribution.domain.routing.SubjectRouter;
 import com.flowpay.routing.monitoring.distribution.domain.service.DistributionService;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,6 +20,7 @@ import java.util.List;
  * the existing strategies, the router and the distribution logic never change.
  */
 @Configuration
+@EnableConfigurationProperties(DistributionProperties.class)
 public class RoutingConfig {
 
     @Bean
