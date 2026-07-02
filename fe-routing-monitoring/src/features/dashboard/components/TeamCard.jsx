@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import CapacityMeter from './CapacityMeter.jsx'
-import { t, tv } from '../lib/i18n.js'
+import { t, tv } from '../../../shared/i18n/i18n.js'
+import { useAuthStore } from '../../auth/authStore.js'
+import { useDashboardStore } from '../dashboardStore.js'
 
-export default function TeamCard({ team, onServeNext, canServe = true }) {
+export default function TeamCard({ team }) {
+  const canServe = useAuthStore((s) => s.roles.includes('ADMIN'))
+  const advance = useDashboardStore((s) => s.serveNext)
   const totalLoad = team.agents.reduce((sum, a) => sum + a.currentLoad, 0)
   const totalCapacity = team.agents.reduce((sum, a) => sum + a.maxConcurrent, 0)
   const [busy, setBusy] = useState(false)
@@ -13,7 +17,7 @@ export default function TeamCard({ team, onServeNext, canServe = true }) {
   async function serveNext() {
     setBusy(true)
     try {
-      await onServeNext(team.id)
+      await advance(team.id)
     } finally {
       setBusy(false)
     }

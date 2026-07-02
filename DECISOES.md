@@ -101,6 +101,12 @@ React + Vite + Tailwind. Paleta em azul-marinho/índigo com acentos em teal/esme
 passando tecnologia, segurança e conforto. O feed ao vivo resolve os IDs para nomes de
 time/atendente e mostra frases legíveis em vez de UUIDs.
 
+O estado global fica em **Zustand** — `authStore` (token persistido em localStorage) e
+`dashboardStore` (times/eventos/status + ações). O código é organizado **por feature**
+(`features/auth`, `features/dashboard`) sobre um `shared/` comum (cliente HTTP que injeta o
+`Bearer` e trata 401/403, realtime, i18n e constantes); o ciclo de WebSocket + polling vive
+num hook (`useDashboardLive`), deixando as páginas e componentes enxutos.
+
 ## Testes
 
 - **Teste unitário puro** (sem Spring/banco) provando a regra dos 3 e o enfileiramento.

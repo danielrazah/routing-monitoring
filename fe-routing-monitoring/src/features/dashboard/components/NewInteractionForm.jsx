@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { SUBJECT_VALUES } from '../lib/subjects.js'
-import { createInteraction } from '../lib/api.js'
-import { t, tv } from '../lib/i18n.js'
+import { SUBJECT_VALUES } from '../../../shared/constants/subjects.js'
+import { createInteraction } from '../api.js'
+import { t, tv } from '../../../shared/i18n/i18n.js'
 
 export default function NewInteractionForm() {
   const [customerName, setCustomerName] = useState('')

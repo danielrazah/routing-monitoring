@@ -1,4 +1,6 @@
-import { t } from '../lib/i18n.js'
+import { t } from '../../../shared/i18n/i18n.js'
+import { useAuthStore } from '../../auth/authStore.js'
+import { useDashboardStore } from '../dashboardStore.js'
 
 const DOTS = {
   connected: 'bg-emerald-400 animate-pulse',
@@ -6,7 +8,12 @@ const DOTS = {
   connecting: 'bg-slate-600',
 }
 
-export default function Header({ status, user, roles = [], onLogout }) {
+export default function Header() {
+  const status = useDashboardStore((s) => s.status)
+  const user = useAuthStore((s) => s.username)
+  const roles = useAuthStore((s) => s.roles)
+  const onLogout = useAuthStore((s) => s.logout)
+
   const dot = DOTS[status] ?? DOTS.connecting
   const label = t(`status.${status}`)
   return (
