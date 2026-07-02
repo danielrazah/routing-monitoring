@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    background-image:
+      radial-gradient(60rem 60rem at 110% -10%, rgba(20, 184, 166, 0.10), transparent),
+      radial-gradient(50rem 50rem at -10% 0%, rgba(79, 70, 229, 0.14), transparent);
+    min-height: 100vh;
+  }
+}
