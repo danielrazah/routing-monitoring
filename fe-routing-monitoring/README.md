@@ -53,9 +53,9 @@ npm run build      # production bundle
 
 The dashboard requires login. The token (JWT) is stored by `authStore` and sent as
 `Authorization: Bearer …` on every API call; a 401/403 clears it and returns to the login
-screen. Two demo roles: **ADMIN** (can create/end interactions and advance queues, sees every
-team) and **AGENT** (read-only, and scoped to its own team — the backend returns only that team's
-data, and the write controls are hidden).
+screen. Two demo roles: **ADMIN** (creates/ends interactions and advances any queue, sees every
+team) and **AGENT** (scoped to its own team — the backend returns only that team's data; the agent
+can "Serve next" on that team's queue, but create/end stays ADMIN-only).
 
 ## Internationalization
 

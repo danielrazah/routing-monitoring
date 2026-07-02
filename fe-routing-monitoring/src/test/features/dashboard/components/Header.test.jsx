@@ -27,4 +27,10 @@ describe('Header', () => {
     render(<Header />)
     expect(screen.getByText('Polling')).toBeInTheDocument()
   })
+
+  it('links the ubots logo to the main page', () => {
+    useAuthStore.setState({ token: 'x', username: 'admin', roles: ['ADMIN'] })
+    render(<Header />)
+    expect(screen.getByAltText('ubots').closest('a')).toHaveAttribute('href', '/')
+  })
 })

@@ -48,14 +48,16 @@ OBS: Para facilitar a avaliação, há dois perfis para emular o uso de Roles do
 
 | Usuário  | Senha      | Perfil                                                             |
 |----------|------------|-------------------------------------------------------------------|
-| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende fila, vê **todos** os times |
-| `ana`    | `agent123` | AGENT — só leitura, vê **apenas** o time Cartões                   |
-| `carla`  | `agent123` | AGENT — só leitura, vê **apenas** o time Empréstimos               |
-| `diego`  | `agent123` | AGENT — só leitura, vê **apenas** o time Outros                    |
+| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende qualquer fila, vê **todos** os times |
+| `ana`    | `agent123` | AGENT — time Cartões (atende a própria fila)                       |
+| `bruno`  | `agent123` | AGENT — time Cartões (atende a própria fila)                       |
+| `carla`  | `agent123` | AGENT — time Empréstimos (atende a própria fila)                   |
+| `diego`  | `agent123` | AGENT — time Outros (atende a própria fila)                        |
 
-Um `AGENT` entra e vê **somente o time a que pertence** (definido no banco, `app_user.team_id`),
-sem os controles de escrita (formulário de novo atendimento e botão "Atender próximo"). O `ADMIN`
-vê todos os times e opera tudo.
+Um `AGENT` entra e vê **somente o time a que pertence** (definido no banco, `app_user.team_id`) e
+pode **"Atender próximo"** na fila **daquele** time — mas **não** cria/encerra atendimentos nem
+mexe em outros times. O `ADMIN` vê todos os times e opera tudo. Cada login `AGENT` também aponta
+para o atendente real que representa (`app_user.agent_id`).
 
 ## Testar rapidamente
 

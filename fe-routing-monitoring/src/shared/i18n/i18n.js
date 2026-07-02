@@ -42,6 +42,7 @@ const DICTS = {
     'teams.inService': 'In service',
     'teams.inQueue': 'In queue',
     'teams.none': 'nobody',
+    'teams.servingBy': '{name} is serving',
 
     'form.title': 'New contact',
     'form.subtitle': 'Simulate a customer reaching out.',
@@ -130,6 +131,7 @@ const DICTS = {
     'teams.inService': 'Em atendimento',
     'teams.inQueue': 'Na fila',
     'teams.none': 'ninguém',
+    'teams.servingBy': '{name} está atendendo',
 
     'form.title': 'Novo atendimento',
     'form.subtitle': 'Simule um cliente entrando em contato.',

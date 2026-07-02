@@ -43,9 +43,39 @@ describe('TeamCard', () => {
     await waitFor(() => expect(serveNext).toHaveBeenCalledWith('t1'))
   })
 
-  it('hides the Serve next button from an agent', () => {
+  it('lets an agent serve the next customer too', () => {
     useAuthStore.setState({ token: 'x', username: 'carla', roles: ['AGENT'] })
     render(<TeamCard team={team} />)
-    expect(screen.queryByText('Serve next')).toBeNull()
+    expect(screen.getByText('Serve next')).toBeInTheDocument()
+  })
+
+  it('reveals per-agent serving names when a team has more than two agents', () => {
+    const bigTeam = {
+      ...team,
+      serving: [], // keep team-level empty so the names below only come from the popovers
+      agents: [
+        { id: 'a1', name: 'Ana', currentLoad: 1, maxConcurrent: 3, serving: ['Cliente A'] },
+        { id: 'a2', name: 'Bruno', currentLoad: 0, maxConcurrent: 3, serving: [] },
+        { id: 'a3', name: 'Cesar', currentLoad: 2, maxConcurrent: 3, serving: ['Cliente C1', 'Cliente C2'] },
+      ],
+    }
+    render(<TeamCard team={bigTeam} />)
+    expect(screen.getByText('Ana is serving')).toBeInTheDocument()
+    expect(screen.getByText('Cliente A')).toBeInTheDocument()
+    expect(screen.getByText('Cliente C2')).toBeInTheDocument()
+  })
+
+  it('does not render the per-agent popover for two or fewer agents', () => {
+    const twoTeam = {
+      ...team,
+      serving: [],
+      agents: [
+        { id: 'a1', name: 'Ana', currentLoad: 1, maxConcurrent: 3, serving: ['Hidden A'] },
+        { id: 'a2', name: 'Bruno', currentLoad: 0, maxConcurrent: 3, serving: ['Hidden B'] },
+      ],
+    }
+    render(<TeamCard team={twoTeam} />)
+    expect(screen.queryByText('Hidden A')).toBeNull()
+    expect(screen.queryByText('Ana is serving')).toBeNull()
   })
 })

@@ -19,6 +19,7 @@ public record DashboardSnapshot(List<TeamSnapshot> teams) {
             List<String> queue) {   // customers waiting, in line order
     }
 
-    public record AgentSnapshot(UUID id, String name, long currentLoad, int maxConcurrent) {
+    public record AgentSnapshot(UUID id, String name, long currentLoad, int maxConcurrent,
+                                List<String> serving) { // customers this agent is handling now
     }
 }

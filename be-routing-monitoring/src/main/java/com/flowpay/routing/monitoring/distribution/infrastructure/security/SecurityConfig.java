@@ -55,9 +55,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         // WebSocket broadcasts carry no sensitive data and no mutations.
                         .requestMatchers("/ws/**").permitAll()
-                        // Changing state requires ADMIN.
-                        .requestMatchers(HttpMethod.POST, "/api/interactions", "/api/interactions/*/end",
-                                "/api/teams/*/advance-queue").hasRole("ADMIN")
+                        // Creating and ending interactions requires ADMIN.
+                        .requestMatchers(HttpMethod.POST, "/api/interactions", "/api/interactions/*/end")
+                                .hasRole("ADMIN")
+                        // Advancing a queue is also open to an AGENT — restricted to its own team
+                        // in the controller, from the token's teamId claim.
+                        .requestMatchers(HttpMethod.POST, "/api/teams/*/advance-queue")
+                                .hasAnyRole("ADMIN", "AGENT")
                         // Reading the dashboard is open to any signed-in user (ADMIN or AGENT).
                         .requestMatchers(HttpMethod.GET, "/api/dashboard").hasAnyRole("ADMIN", "AGENT")
                         .anyRequest().authenticated())

@@ -141,18 +141,25 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
 ## Segurança
 
 Há dois perfis de acesso por **role**:
-- **`ADMIN`**: pode criar e encerrar atendimentos, operar a fila e enxerga **todos os times**.
-- **`AGENT`**: acesso somente de leitura ao dashboard e **restrito ao time a que pertence** no
-  banco (coluna `app_user.team_id`).
-As rotas de escrita exigem perfil **`ADMIN`**, enquanto login, documentação (Scalar) e health check permanecem públicos.
+- **`ADMIN`**: cria e encerra atendimentos, atende **qualquer** fila e enxerga **todos os times**.
+- **`AGENT`**: vê o dashboard **restrito ao time a que pertence** (coluna `app_user.team_id`) e pode
+  **atender a fila daquele time** ("Atender próximo"); não cria/encerra atendimentos nem age em
+  outros times.
+Criar/encerrar exigem **`ADMIN`**; `advance-queue` aceita `ADMIN` ou `AGENT`. Login, documentação
+(Scalar) e health check permanecem públicos.
 No frontend, o token é armazenado e enviado como `Bearer`, com redirecionamento para a tela de login em respostas **401** ou **403**.
 
 **Escopo por time.** No login, se o usuário é um `AGENT`, o time dele entra como *claim* `teamId`
-no JWT. O endpoint de snapshot (`/api/dashboard`) lê esse claim e **filtra a resposta para aquele
-único time**; sem o claim (ADMIN), devolve todos. Assim a regra de visibilidade vive no backend —
-o frontend só renderiza os times que recebe.
+no JWT. O snapshot (`/api/dashboard`) lê esse claim e **filtra a resposta para aquele único time**;
+e o `advance-queue` **recusa (403)** se o `teamId` do path não for o do agente. Sem o claim (ADMIN),
+vê e opera todos. Assim a regra de escopo vive no backend — o frontend só renderiza o que recebe.
 
-A autenticação usa **JWT stateless** (Spring Security como *resource server*; token HMAC assinado/validado com o Nimbus). Os usuários ficam **persistidos no Postgres** (tabela `app_user`, com senha em hash BCrypt e `team_id` opcional), semeados via Flyway (`V2` cria `admin`; `V3` troca o antigo `viewer` pelos agentes `ana`/`carla`/`diego`, cada um ligado a um time). Um `UserDetailsService` lê o usuário e sua role do banco; trocar por outro provedor é só reimplementar essa interface.
+**Relação usuário ↔ atendente.** Além do time, cada login `AGENT` aponta para o **atendente real**
+que representa (`app_user.agent_id` → `agent.id`); como os ids de `agent` são aleatórios, o `V4`
+faz o vínculo por nome. No dashboard, quando um time tem mais de dois atendentes, ao passar o mouse
+na linha do atendente aparecem os clientes que **ele** está atendendo (por-agente, via `AgentSnapshot.serving`).
+
+A autenticação usa **JWT stateless** (Spring Security como *resource server*; token HMAC assinado/validado com o Nimbus). Os usuários ficam **persistidos no Postgres** (tabela `app_user`, com senha em hash BCrypt, `team_id` e `agent_id` opcionais), semeados via Flyway (`V2` cria `admin`; `V3` troca o antigo `viewer` pelos agentes, cada um ligado a um time; `V4` liga cada agente ao seu `agent` e adiciona o `bruno` no time Cartões). Um `UserDetailsService` lê o usuário e sua role do banco; trocar por outro provedor é só reimplementar essa interface.
 
 ## Frontend
 
