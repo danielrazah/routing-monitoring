@@ -40,9 +40,9 @@ public class DemoDataSeeder implements ApplicationRunner {
         if (interactions.count() > 0) {
             return; // already seeded (or in real use) — never pile up on restarts
         }
-        // Capacities: Cards 2 agents (6 slots), Loans 1 (3), Others 1 (3). Seeding a couple
-        // above capacity leaves each team full with a small queue.
-        seed(Subject.CARD_ISSUE, 8);
+        // Capacities: Cards 3 agents (9 slots), Loans 1 (3), Others 1 (3). Seeding a couple
+        // above each capacity leaves every team full with a small queue.
+        seed(Subject.CARD_ISSUE, 11);
         seed(Subject.LOAN_CONTRACTING, 5);
         seed(Subject.OTHER, 5);
         log.info("Demo data seeded: every team starts at capacity with a waiting queue.");
