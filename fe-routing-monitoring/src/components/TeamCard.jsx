@@ -2,7 +2,7 @@ import { useState } from 'react'
 import CapacityMeter from './CapacityMeter.jsx'
 import { t, tv } from '../lib/i18n.js'
 
-export default function TeamCard({ team, onServeNext }) {
+export default function TeamCard({ team, onServeNext, canServe = true }) {
   const totalLoad = team.agents.reduce((sum, a) => sum + a.currentLoad, 0)
   const totalCapacity = team.agents.reduce((sum, a) => sum + a.maxConcurrent, 0)
   const [busy, setBusy] = useState(false)
@@ -62,14 +62,16 @@ export default function TeamCard({ team, onServeNext }) {
         />
       </div>
 
-      <button
-        onClick={serveNext}
-        disabled={!hasQueue || busy}
-        title={t('teams.serveNextHint')}
-        className="mt-4 w-full rounded-xl bg-slate-800/80 px-4 py-2 text-sm font-medium text-teal-300 ring-1 ring-slate-700 transition hover:bg-slate-800 hover:text-teal-200 disabled:cursor-not-allowed disabled:text-slate-500 disabled:ring-slate-800 disabled:hover:bg-slate-800/80"
-      >
-        {t('teams.serveNext')}
-      </button>
+      {canServe && (
+        <button
+          onClick={serveNext}
+          disabled={!hasQueue || busy}
+          title={t('teams.serveNextHint')}
+          className="mt-4 w-full rounded-xl bg-slate-800/80 px-4 py-2 text-sm font-medium text-teal-300 ring-1 ring-slate-700 transition hover:bg-slate-800 hover:text-teal-200 disabled:cursor-not-allowed disabled:text-slate-500 disabled:ring-slate-800 disabled:hover:bg-slate-800/80"
+        >
+          {t('teams.serveNext')}
+        </button>
+      )}
     </div>
   )
 }

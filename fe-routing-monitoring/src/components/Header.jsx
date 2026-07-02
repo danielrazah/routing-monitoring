@@ -6,11 +6,11 @@ const DOTS = {
   connecting: 'bg-slate-600',
 }
 
-export default function Header({ status }) {
+export default function Header({ status, user, roles = [], onLogout }) {
   const dot = DOTS[status] ?? DOTS.connecting
   const label = t(`status.${status}`)
   return (
-    <header className="flex items-center justify-between">
+    <header className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-teal-400 shadow-lg shadow-indigo-500/20">
           <span className="text-lg font-bold text-slate-950">F</span>
@@ -20,9 +20,29 @@ export default function Header({ status }) {
           <p className="text-sm text-slate-400">{t('header.subtitle')}</p>
         </div>
       </div>
-      <div className="flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1.5 text-sm ring-1 ring-slate-800">
-        <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
-        <span className="text-slate-300">{label}</span>
+
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1.5 text-sm ring-1 ring-slate-800">
+          <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+          <span className="text-slate-300">{label}</span>
+        </div>
+
+        {user && (
+          <div className="flex items-center gap-2 rounded-full bg-slate-900/70 px-3 py-1.5 text-sm ring-1 ring-slate-800">
+            <span className="text-slate-200">{user}</span>
+            {roles.map((r) => (
+              <span key={r} className="rounded-full bg-indigo-500/15 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 ring-1 ring-indigo-500/30">
+                {r}
+              </span>
+            ))}
+            <button
+              onClick={onLogout}
+              className="ml-1 text-xs font-medium text-slate-400 transition hover:text-rose-300"
+            >
+              {t('header.logout')}
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )
