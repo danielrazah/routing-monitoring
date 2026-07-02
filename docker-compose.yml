@@ -28,8 +28,28 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/routing
       SPRING_DATASOURCE_USERNAME: routing
       SPRING_DATASOURCE_PASSWORD: routing
+      # Real-time transport. Defaults to `simple` (in-memory, single instance).
+      # For horizontal scaling, start with `REALTIME_TRANSPORT=broker docker compose --profile broker up`,
+      # which brings up RabbitMQ below and relays /topic through it. The relay host/port are
+      # ignored while transport=simple, so this is inert by default.
+      REALTIME_TRANSPORT: ${REALTIME_TRANSPORT:-simple}
+      REALTIME_RELAY_HOST: rabbitmq
+      REALTIME_RELAY_PORT: "61613"
     ports:
       - "8080:8080"
+
+  # Optional STOMP broker for the horizontal-scale transport. Off by default: it only starts
+  # under the `broker` profile (`docker compose --profile broker up`). See DECISOES.md.
+  rabbitmq:
+    image: rabbitmq:4-management
+    profiles: ["broker"]
+    volumes:
+      # Enables the STOMP plugin (port 61613) alongside the management UI.
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # management UI
+      - "61613:61613"  # STOMP (used by the backend relay)
 
   frontend:
     build: ./fe-routing-monitoring

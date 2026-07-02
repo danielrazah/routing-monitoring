@@ -78,6 +78,25 @@ docker compose down       # para os containers
 docker compose down -v    # também apaga os dados do Postgres
 ```
 
+## Rodar em modo broker (escala horizontal, opcional)
+
+Por padrão o tempo real usa um broker STOMP **em memória** (`distribution.realtime.transport=simple`),
+perfeito para uma instância. Para várias instâncias do backend compartilharem os eventos, dá
+para trocar o transporte por um **broker externo** (RabbitMQ) — assim um evento gerado em
+qualquer instância chega aos dashboards conectados a todas elas. Detalhes do porquê no
+`DECISOES.md`.
+
+```bash
+# sobe também o RabbitMQ (profile "broker") e liga o relay no backend
+REALTIME_TRANSPORT=broker docker compose --profile broker up --build
+```
+
+- RabbitMQ (STOMP na porta 61613) e o management UI em http://localhost:15672 (`guest`/`guest`).
+- Sem a variável e sem o profile, o `docker compose up` normal continua idêntico ao de sempre
+  (in-memory, sem RabbitMQ).
+- Escalar de fato (`--scale backend=N`) pede um load balancer na frente e remover o mapeamento
+  fixo da porta 8080 — fora do escopo aqui; o ponto é que o transporte já suporta.
+
 ## Rodar sem Docker (opcional)
 
 **Backend** (precisa de JDK 21 e um Postgres em `localhost:5432`):

@@ -20,7 +20,7 @@ import java.util.List;
  * the existing strategies, the router and the distribution logic never change.
  */
 @Configuration
-@EnableConfigurationProperties(DistributionProperties.class)
+@EnableConfigurationProperties({DistributionProperties.class, RealtimeProperties.class})
 public class RoutingConfig {
 
     @Bean
