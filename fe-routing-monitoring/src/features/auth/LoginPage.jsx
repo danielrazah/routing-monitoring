@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { login } from '../lib/auth.js'
-import { t } from '../lib/i18n.js'
+import { useAuthStore } from './authStore.js'
+import { t } from '../../shared/i18n/i18n.js'
 
-export default function Login({ onLogin }) {
+export default function LoginPage() {
+  const login = useAuthStore((s) => s.login)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -13,8 +14,8 @@ export default function Login({ onLogin }) {
     setBusy(true)
     setError(null)
     try {
-      const auth = await login(username.trim(), password)
-      onLogin(auth)
+      await login(username.trim(), password)
+      // The App switches to the dashboard as soon as the token lands in the store.
     } catch {
       setError(t('login.error'))
     } finally {

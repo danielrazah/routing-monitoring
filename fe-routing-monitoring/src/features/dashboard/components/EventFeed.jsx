@@ -1,5 +1,5 @@
-import { EVENT_STYLES } from '../lib/subjects.js'
-import { t, tv, formatTime } from '../lib/i18n.js'
+import { EVENT_STYLES } from '../../../shared/constants/subjects.js'
+import { t, tv, formatTime } from '../../../shared/i18n/i18n.js'
 
 export default function EventFeed({ events, teams, live }) {
   // Resolve ids to human names using the current snapshot.
