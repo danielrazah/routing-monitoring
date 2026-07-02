@@ -29,7 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-@TestPropertySource(properties = "distribution.demo.seed-on-startup=false")
+@TestPropertySource(properties = {
+        "distribution.demo.seed-on-startup=false",
+        "distribution.realtime.transport=simple"}) // no external broker in the test environment
 class ApiIntegrationTest {
 
     @Container
