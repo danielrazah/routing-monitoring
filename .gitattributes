@@ -1,0 +1,17 @@
+# Normalize line endings so builds behave the same on Linux and Windows.
+* text=auto
+
+# Files consumed inside Linux containers must always use LF.
+Dockerfile text eol=lf
+*.sh text eol=lf
+gradlew text eol=lf
+nginx.conf text eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+
+# Binaries must never be touched.
+*.jar binary
+*.png binary
+*.jpg binary
+*.ico binary
