@@ -88,21 +88,12 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
 
 ## Segurança
 
-Acesso por login com **JWT stateless**: o Spring Security funciona como *resource server*
-e o token é HMAC assinado/validado com o Nimbus (sem lib de terceiros). Dois perfis por
-**role** — `ADMIN` altera o estado (criar/encerrar atendimentos, atender a fila) e `VIEWER`
-só lê o dashboard. As rotas de escrita exigem ADMIN; login, docs (Scalar) e health ficam
-abertos. O frontend guarda o token, envia como `Bearer` e volta para a tela de login em
-401/403. Usuários são in-memory (demo); trocar por um provedor real é só reimplementar o
-`UserDetailsService`.
-
-## Tempo real (e o caso do Safari)
-
-O dashboard recebe eventos por **WebSocket nativo** (STOMP), que passa limpo pelo nginx.
-O SockJS foi testado, mas seu fallback HTTP quebra atrás do proxy nesta versão do Spring
-(o `xhr_send` responde 404). Então: WebSocket nativo onde o navegador aceita e, como o
-Safari derruba `ws://localhost`, um **fallback por polling** do `/api/dashboard` a cada
-2,5s — assim os contadores ficam sempre vivos em qualquer navegador.
+Há dois perfis de acesso por **role**:
+- **`ADMIN`**: pode criar e encerrar atendimentos, além de operar a fila.
+- **`VIEWER`**: possui acesso somente para visualização do dashboard.
+As rotas de escrita exigem perfil **`ADMIN`**, enquanto login, documentação (Scalar) e health check permanecem públicos.
+No frontend, o token é armazenado e enviado como `Bearer`, com redirecionamento para a tela de login em respostas **401** ou **403**.
+A autenticação usa **JWT stateless** (Spring Security como *resource server*; token HMAC assinado/validado com o Nimbus). Os usuários ficam **persistidos no Postgres** (tabela `app_user`, com senha em hash BCrypt), semeados via Flyway (`V2`) com as contas de demonstração `admin`/`viewer`. Um `UserDetailsService` lê o usuário e sua role do banco; trocar por outro provedor é só reimplementar essa interface.
 
 ## Frontend
 
