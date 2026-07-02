@@ -77,7 +77,7 @@ protegidas e testáveis sem framework; o resto usa Spring sem abstrações desne
 
 - **Documentação da API.** O spec OpenAPI é gerado pelo springdoc e renderizado pelo
   **Scalar** (uma UI de referência moderna) em `/scalar`, em tema escuro por padrão. O JSON
-  do spec fica em `/v3/api-docs`. Preferimos o Scalar ao Swagger UI por ser mais enxuto e
+  do spec fica em `/v3/api-docs`. Preferi o Scalar ao Swagger UI por ser mais enxuto e
   legível.
 
 - **Virtual threads (Java 21).** `spring.threads.virtual.enabled=true`: chamadas JDBC/fila
@@ -109,12 +109,20 @@ num hook (`useDashboardLive`), deixando as páginas e componentes enxutos.
 
 ## Testes
 
-- **Teste unitário puro** (sem Spring/banco) provando a regra dos 3 e o enfileiramento.
-- **Teste de integração** com Testcontainers exercitando o `SKIP LOCKED` num Postgres real.
-- **Smoke test** que sobe o contexto inteiro (garante que tudo se conecta).
-- **Cobertura com JaCoCo.** `./gradlew test` também gera um relatório em
-  `build/reports/jacoco/test/html/index.html`, concentrado no núcleo de domínio (onde estão
-  as regras); adapters de web/persistência têm menos cobertura por opção.
+**Backend** (JUnit 5, Mockito, Testcontainers):
+- **Unitários puros** (sem Spring/banco) cobrindo domínio (regra dos 3, ciclo, roteamento,
+  fila) e os casos de uso.
+- **Integração** com Testcontainers: o `SKIP LOCKED` num Postgres real e um teste que sobe o
+  servidor (porta aleatória) exercitando toda a superfície HTTP — auth, roles, ciclo do
+  atendimento, fila e erros (400/401/403/404/409).
+- Cobertura por **JaCoCo** (`./gradlew test` gera o relatório em
+  `build/reports/jacoco/test/html/`): **~100% de linhas** (config, bootstrap e entidades JPA
+  ficam de fora da métrica, por serem "boilerplate").
+
+**Frontend** (Vitest + Testing Library + jsdom):
+- Testes de stores, i18n, cliente HTTP, realtime, hook e componentes, em `src/test/`
+  espelhando `src/`. Cobertura **~99% de linhas** (`npm run coverage`, relatório em
+  `coverage/`).
 
 ## Git
 
