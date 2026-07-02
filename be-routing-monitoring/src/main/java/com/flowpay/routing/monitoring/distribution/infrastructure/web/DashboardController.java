@@ -1,7 +1,7 @@
 package com.flowpay.routing.monitoring.distribution.infrastructure.web;
 
-import com.flowpay.routing.monitoring.distribution.domain.model.Agent;
 import com.flowpay.routing.monitoring.distribution.domain.model.InteractionState;
+import com.flowpay.routing.monitoring.distribution.infrastructure.config.DistributionProperties;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.AgentJpaRepository;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.InteractionJpaRepository;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.QueueItemJpaRepository;
@@ -29,15 +29,18 @@ public class DashboardController {
     private final AgentJpaRepository agents;
     private final InteractionJpaRepository interactions;
     private final QueueItemJpaRepository queue;
+    private final DistributionProperties properties;
 
     public DashboardController(TeamJpaRepository teams,
                                AgentJpaRepository agents,
                                InteractionJpaRepository interactions,
-                               QueueItemJpaRepository queue) {
+                               QueueItemJpaRepository queue,
+                               DistributionProperties properties) {
         this.teams = teams;
         this.agents = agents;
         this.interactions = interactions;
         this.queue = queue;
+        this.properties = properties;
     }
 
     @Operation(summary = "Current snapshot",
@@ -55,7 +58,7 @@ public class DashboardController {
                                         agent.getName(),
                                         interactions.countByAssignedAgentIdAndState(
                                                 agent.getId(), InteractionState.IN_SERVICE.name()),
-                                        Agent.MAX_CONCURRENT))
+                                        properties.getMaxConcurrentPerAgent()))
                                 .toList(),
                         interactions.findServingCustomerNamesByTeam(team.getId()),
                         queue.findQueuedCustomerNamesByTeam(team.getId())))

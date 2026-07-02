@@ -38,7 +38,7 @@ class DistributionServiceTest {
         WaitingQueue queue = new WaitingQueue(TEAM_ID);
 
         // First three go straight to the agent.
-        for (int i = 0; i < Agent.MAX_CONCURRENT; i++) {
+        for (int i = 0; i < Agent.DEFAULT_MAX_CONCURRENT; i++) {
             DistributionResult result = distribution.distribute(newInteraction(), List.of(agent));
             assertInstanceOf(DistributionResult.Assigned.class, result);
         }
