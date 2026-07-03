@@ -16,3 +16,9 @@ export async function fetchInteractionStatus(id) {
   if (!res.ok) throw new Error('Failed to fetch status')
   return res.json()
 }
+
+// The customer closes its own conversation, freeing the agent's slot.
+export async function endMyInteraction(id) {
+  const res = await fetch(`/api/public/interactions/${id}/end`, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to end interaction')
+}

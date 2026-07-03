@@ -3,6 +3,7 @@ import TeamCard from './components/TeamCard.jsx'
 import NewInteractionForm from './components/NewInteractionForm.jsx'
 import EventFeed from './components/EventFeed.jsx'
 import AgentConversations from './AgentConversations.jsx'
+import AdminConversations from './AdminConversations.jsx'
 import { useDashboardStore } from './dashboardStore.js'
 import { useDashboardLive } from './useDashboardLive.js'
 import { useAuthStore } from '../auth/authStore.js'
@@ -33,6 +34,7 @@ export default function DashboardPage() {
 
         <aside className="space-y-6">
           {isAdmin && <NewInteractionForm />}
+          {isAdmin && <AdminConversations />}
           {isAgent && <AgentConversations />}
           <EventFeed events={events} teams={teams} live={status === 'connected'} />
         </aside>

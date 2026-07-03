@@ -63,6 +63,16 @@ export default {
         indigo: gold,
         teal: yellow,
       },
+      // "New message" indicator: a customer's name blinks in the agent's conversation list.
+      keyframes: {
+        blink: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.35' },
+        },
+      },
+      animation: {
+        blink: 'blink 1s ease-in-out infinite',
+      },
     },
   },
   plugins: [],

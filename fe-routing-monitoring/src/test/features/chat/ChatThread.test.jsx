@@ -10,7 +10,7 @@ vi.mock('@/shared/api/chat.js', () => ({
 vi.mock('@/shared/api/realtime.js', () => ({ connectChat: vi.fn(() => () => {}) }))
 
 import ChatThread from '@/features/chat/ChatThread.jsx'
-import { fetchPublicMessages, sendPublicMessage } from '@/shared/api/chat.js'
+import { fetchPublicMessages, sendPublicMessage, fetchMessages } from '@/shared/api/chat.js'
 import { connectChat } from '@/shared/api/realtime.js'
 
 describe('ChatThread', () => {
@@ -55,5 +55,20 @@ describe('ChatThread', () => {
 
     act(() => push({ id: 'm3', sender: 'AGENT', body: 'chegou pelo ws', createdAt: '2026-01-01T00:02:00Z' }))
     await waitFor(() => expect(screen.getByText('chegou pelo ws')).toBeInTheDocument())
+  })
+
+  it('renders the admin variant read-only, with sender labels and no composer', async () => {
+    fetchMessages.mockResolvedValue([
+      { id: 'm1', sender: 'CUSTOMER', body: 'oi', createdAt: '2026-01-01T00:00:00Z' },
+      { id: 'm2', sender: 'AGENT', body: 'olá', createdAt: '2026-01-01T00:01:00Z' },
+    ])
+    render(<ChatThread interactionId="i9" variant="admin" />)
+
+    await waitFor(() => expect(screen.getByText('oi')).toBeInTheDocument())
+    expect(screen.getByText('Customer')).toBeInTheDocument()
+    expect(screen.getByText('Agent')).toBeInTheDocument()
+    // Read-only: no message box and no send button.
+    expect(screen.queryByPlaceholderText('Type a message…')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Send' })).toBeNull()
   })
 })

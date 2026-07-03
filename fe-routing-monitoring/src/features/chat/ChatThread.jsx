@@ -10,10 +10,12 @@ import { t } from '../../shared/i18n/i18n.js'
 
 const POLL_INTERVAL_MS = 3000
 
-// One component for both sides. 'public' = the customer; 'agent' = the dashboard agent.
+// One component for every side. 'public' = the customer; 'agent' = the dashboard agent;
+// 'admin' = a read-only monitor (no composer, both senders labelled).
 const VARIANTS = {
   public: { load: fetchPublicMessages, send: sendPublicMessage, me: 'CUSTOMER' },
   agent: { load: fetchMessages, send: sendMessage, me: 'AGENT' },
+  admin: { load: fetchMessages, send: null, me: 'AGENT', readOnly: true },
 }
 
 export default function ChatThread({ interactionId, variant = 'public' }) {
@@ -84,33 +86,43 @@ export default function ChatThread({ interactionId, variant = 'public' }) {
         {messages.length === 0 ? (
           <p className="text-xs text-slate-500">{t('chat.empty')}</p>
         ) : (
-          messages.map((m) => <ChatBubble key={m.id} mine={m.sender === api.me} body={m.body} />)
+          messages.map((m) => (
+            <ChatBubble
+              key={m.id}
+              mine={m.sender === api.me}
+              body={m.body}
+              label={api.readOnly ? t(`chat.sender.${m.sender}`) : null}
+            />
+          ))
         )}
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={submit} className="mt-3 flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={t('chat.placeholder')}
-          className="min-w-0 flex-1 rounded-xl bg-slate-950/60 px-3 py-2 text-sm ring-1 ring-slate-800 outline-none focus:ring-2 focus:ring-teal-400/60"
-        />
-        <button
-          type="submit"
-          disabled={busy || !text.trim()}
-          className="rounded-xl bg-gradient-to-r from-indigo-500 to-teal-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:opacity-90 disabled:opacity-50"
-        >
-          {t('chat.send')}
-        </button>
-      </form>
+      {!api.readOnly && (
+        <form onSubmit={submit} className="mt-3 flex gap-2">
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={t('chat.placeholder')}
+            className="min-w-0 flex-1 rounded-xl bg-slate-950/60 px-3 py-2 text-sm ring-1 ring-slate-800 outline-none focus:ring-2 focus:ring-teal-400/60"
+          />
+          <button
+            type="submit"
+            disabled={busy || !text.trim()}
+            className="rounded-xl bg-gradient-to-r from-indigo-500 to-teal-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:opacity-90 disabled:opacity-50"
+          >
+            {t('chat.send')}
+          </button>
+        </form>
+      )}
     </div>
   )
 }
 
-function ChatBubble({ mine, body }) {
+function ChatBubble({ mine, body, label }) {
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
+      {label && <span className="mb-0.5 px-1 text-[10px] font-medium text-slate-500">{label}</span>}
       <span
         className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3 py-1.5 text-sm ${
           mine

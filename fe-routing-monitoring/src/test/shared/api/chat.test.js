@@ -8,6 +8,7 @@ import {
   fetchConversations,
   fetchMessages,
   sendMessage,
+  endConversation,
 } from '@/shared/api/chat.js'
 import { apiFetch } from '@/shared/api/http.js'
 
@@ -45,6 +46,11 @@ describe('chat api', () => {
     expect(path).toBe('/api/interactions/i1/messages')
     expect(options.method).toBe('POST')
     expect(JSON.parse(options.body)).toEqual({ body: 'resposta' })
+
+    await endConversation('i1')
+    const [endPath, endOptions] = apiFetch.mock.calls[3]
+    expect(endPath).toBe('/api/agent/conversations/i1/end')
+    expect(endOptions.method).toBe('POST')
   })
 
   it('throws when a response is not ok', async () => {
@@ -53,5 +59,6 @@ describe('chat api', () => {
     await expect(fetchPublicMessages('i1')).rejects.toThrow()
     await expect(sendPublicMessage('i1', 'x')).rejects.toThrow()
     await expect(fetchConversations()).rejects.toThrow()
+    await expect(endConversation('i1')).rejects.toThrow()
   })
 })

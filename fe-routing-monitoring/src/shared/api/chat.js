@@ -39,3 +39,9 @@ export async function sendMessage(interactionId, body) {
   if (!res.ok) throw new Error('Failed to send message')
   return res.json()
 }
+
+// The agent ends one of its own conversations, freeing the slot and pulling the next in line.
+export async function endConversation(interactionId) {
+  const res = await apiFetch(`/api/agent/conversations/${interactionId}/end`, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to end conversation')
+}

@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 vi.mock('@/shared/api/public.js', () => ({
   joinQueue: vi.fn(),
   fetchInteractionStatus: vi.fn(),
+  endMyInteraction: vi.fn(),
 }))
 vi.mock('@/shared/api/realtime.js', () => ({
   connectDashboard: vi.fn(() => () => {}),
@@ -17,7 +18,7 @@ vi.mock('@/shared/api/chat.js', () => ({
 }))
 
 import CustomerPage from '@/features/customer/CustomerPage.jsx'
-import { joinQueue } from '@/shared/api/public.js'
+import { joinQueue, fetchInteractionStatus, endMyInteraction } from '@/shared/api/public.js'
 import { connectDashboard } from '@/shared/api/realtime.js'
 
 function join(name = 'Ana') {
@@ -26,7 +27,11 @@ function join(name = 'Ana') {
 }
 
 describe('CustomerPage', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Harmless default so the served-phase status poll never throws.
+    fetchInteractionStatus.mockResolvedValue({ state: 'IN_SERVICE', assignedAgentName: null })
+  })
   afterEach(() => vi.restoreAllMocks())
 
   it('joins the queue and shows the waiting state', async () => {
@@ -74,5 +79,46 @@ describe('CustomerPage', () => {
 
     await waitFor(() =>
       expect(screen.getByText('Could not join the queue. Try again.')).toBeInTheDocument())
+  })
+
+  it('shows who is serving the customer', async () => {
+    joinQueue.mockResolvedValue({ id: 'i3', state: 'IN_SERVICE', assignedAgentName: 'Carla' })
+    render(<CustomerPage />)
+    join('Bruno')
+
+    await waitFor(() => expect(screen.getByText('Carla is serving you.')).toBeInTheDocument())
+  })
+
+  it('lets the customer end the conversation', async () => {
+    joinQueue.mockResolvedValue({ id: 'i4', state: 'IN_SERVICE', assignedAgentName: 'Carla' })
+    endMyInteraction.mockResolvedValue()
+    render(<CustomerPage />)
+    join('Bruno')
+
+    await waitFor(() => expect(screen.getByText('You will be served now')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'End conversation' }))
+
+    await waitFor(() => expect(endMyInteraction).toHaveBeenCalledWith('i4'))
+    await waitFor(() => expect(screen.getByText('Conversation ended')).toBeInTheDocument())
+  })
+
+  it('moves to the ended state when the agent closes the conversation', async () => {
+    joinQueue.mockResolvedValue({ id: 'i5', state: 'IN_SERVICE', assignedAgentName: 'Carla' })
+    fetchInteractionStatus.mockResolvedValue({ state: 'ENDED', assignedAgentName: 'Carla' })
+    render(<CustomerPage />)
+    join('Bruno')
+
+    await waitFor(() => expect(screen.getByText('Conversation ended')).toBeInTheDocument())
+  })
+
+  it('keeps the served view when the status poll fails', async () => {
+    joinQueue.mockResolvedValue({ id: 'i6', state: 'IN_SERVICE', assignedAgentName: 'Carla' })
+    fetchInteractionStatus.mockRejectedValue(new Error('offline'))
+    render(<CustomerPage />)
+    join('Bruno')
+
+    await waitFor(() => expect(screen.getByText('You will be served now')).toBeInTheDocument())
+    // The transient error is swallowed; the customer stays in the served view.
+    expect(screen.getByRole('button', { name: 'End conversation' })).toBeInTheDocument()
   })
 })
