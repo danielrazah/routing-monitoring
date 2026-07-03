@@ -21,13 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Boots with the demo seed enabled (its default) and checks the dashboard opens with every
+ * Boots with the demo seed explicitly enabled and checks the dashboard opens with every
  * team already over capacity: all agents full and a non-empty queue. This also exercises the
  * DemoDataSeeder and the create/assign/queue path running at startup.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-@TestPropertySource(properties = "distribution.realtime.transport=simple") // no external broker in tests
+@TestPropertySource(properties = {
+        "distribution.demo.seed-on-startup=true", // the app default is off; this test asserts the seeded state
+        "distribution.realtime.transport=simple"}) // no external broker in tests
 class DemoSeedIntegrationTest {
 
     @Container

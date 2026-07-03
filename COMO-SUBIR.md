@@ -142,13 +142,12 @@ REALTIME_TRANSPORT=simple docker compose up --build
 > frente e remover o mapeamento fixo da porta 8080 — fora do escopo aqui. O ponto é que, com o
 > broker como padrão, o **transporte de eventos já suporta** várias instâncias.
 
-## Rodar sem Docker (opcional)
+## Rodar os testes e relatório de cobertura
 
-**Backend** (precisa de JDK 21 e um Postgres em `localhost:5432`):
+**Backend** (precisa de JDK 21):
 
 ```bash
 cd be-routing-monitoring
-./gradlew bootRun        # sobe a API
 ./gradlew test           # testes (o de integração usa Testcontainers + Docker)
                          # gera também o relatório de cobertura (JaCoCo) em
                          # build/reports/jacoco/test/html/index.html
@@ -158,8 +157,6 @@ cd be-routing-monitoring
 
 ```bash
 cd fe-routing-monitoring
-npm install
-npm run dev         # dev server em http://localhost:8090, com proxy para o backend
 npm test            # roda os testes uma vez (Vitest + jsdom)
 npm run coverage    # idem, com relatório de cobertura em coverage/index.html
 ```
