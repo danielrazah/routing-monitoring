@@ -25,7 +25,9 @@ public class ChatService {
     public static final String AGENT = "AGENT";
 
     private static final Logger log = LoggerFactory.getLogger(ChatService.class);
-    private static final String CHAT_TOPIC = "/topic/chat/";
+    // Dot, not slash: RabbitMQ's STOMP broker rejects extra path segments in a topic
+    // destination, so the id goes into the routing key ("/topic/chat.<id>"), not the path.
+    private static final String CHAT_TOPIC = "/topic/chat.";
 
     private final MessageJpaRepository messages;
     private final SimpMessagingTemplate messaging;

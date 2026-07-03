@@ -45,7 +45,9 @@ export function connectChat(interactionId, onMessage) {
     reconnectDelay: 4000,
     onConnect: () => {
       everConnected = true
-      client.subscribe(`/topic/chat/${interactionId}`, (frame) => onMessage(JSON.parse(frame.body)))
+      // Dot, not slash: RabbitMQ's STOMP broker rejects extra path segments, so the id
+      // rides in the routing key ("/topic/chat.<id>") to match the backend's destination.
+      client.subscribe(`/topic/chat.${interactionId}`, (frame) => onMessage(JSON.parse(frame.body)))
     },
     onWebSocketClose: () => {
       if (!everConnected) client.deactivate()
