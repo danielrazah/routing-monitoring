@@ -63,11 +63,13 @@ export default {
         indigo: gold,
         teal: yellow,
       },
-      // "New message" indicator: a customer's name blinks in the agent's conversation list.
+      // "New message" indicator: a customer's name pulses green in the agent's list.
+      // We animate the background colour (not opacity), so the chip never turns translucent
+      // and never looks like it's overlapping the neighbouring chip.
       keyframes: {
         blink: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.35' },
+          '0%, 100%': { backgroundColor: 'rgba(16, 185, 129, 0.30)' },
+          '50%': { backgroundColor: 'rgba(16, 185, 129, 0.06)' },
         },
       },
       animation: {

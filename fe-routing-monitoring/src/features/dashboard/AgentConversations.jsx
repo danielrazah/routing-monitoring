@@ -120,11 +120,11 @@ export default function AgentConversations() {
                     isSelected
                       ? 'bg-teal-500/20 text-teal-200 ring-teal-500/40'
                       : isUnread
-                        ? 'animate-blink bg-amber-500/20 text-amber-100 ring-amber-400/50'
+                        ? 'animate-blink bg-emerald-500/20 text-emerald-100 ring-emerald-400/60'
                         : 'bg-slate-800/70 text-slate-300 ring-slate-700 hover:text-slate-100'
                   }`}
                 >
-                  {isUnread && <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />}
+                  {isUnread && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
                   {c.customerName}
                 </button>
               )
