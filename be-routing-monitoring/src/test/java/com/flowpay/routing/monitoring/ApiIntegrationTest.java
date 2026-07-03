@@ -2,6 +2,7 @@ package com.flowpay.routing.monitoring;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -77,6 +78,16 @@ class ApiIntegrationTest {
                 "{\"username\":\"%s\",\"password\":\"%s\"}".formatted(user, pass));
         assertEquals(200, res.status());
         return json.readTree(res.body()).get("token").asText();
+    }
+
+    /**
+     * Each test starts from a clean board. The suite shares one Postgres across methods, so
+     * without this a test could see interactions/queues another one left behind (and the order
+     * JUnit runs methods in isn't fixed). The ADMIN reset — itself under test — is the reset.
+     */
+    @BeforeEach
+    void resetBoard() throws Exception {
+        assertEquals(204, send("POST", "/api/admin/reset", login("admin", "admin123"), null).status());
     }
 
     @Test
@@ -213,6 +224,45 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void customerAndAgentExchangeMessagesOnAnInteraction() throws Exception {
+        String admin = login("admin", "admin123");
+        // Loans has a single agent (Carla), so this is assigned to her deterministically.
+        String id = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Chat Cliente\",\"subject\":\"LOAN_CONTRACTING\"}").body())
+                .get("id").asText();
+
+        // Customer sends (public, no auth).
+        assertEquals(201, send("POST", "/api/public/interactions/" + id + "/messages", null,
+                "{\"body\":\"oi, preciso de ajuda\"}").status());
+
+        // The agent sees the conversation and replies.
+        String carla = login("carla", "agent123");
+        assertTrue(send("GET", "/api/agent/conversations", carla, null).body().contains(id),
+                "carla should see the conversation she is serving");
+        assertEquals(201, send("POST", "/api/interactions/" + id + "/messages", carla,
+                "{\"body\":\"claro, como posso ajudar?\"}").status());
+
+        // Both sides see the full thread (customer + agent), oldest first.
+        JsonNode thread = json.readTree(send("GET", "/api/public/interactions/" + id + "/messages", null, null).body());
+        assertEquals(2, thread.size());
+        assertEquals("CUSTOMER", thread.get(0).get("sender").asText());
+        assertEquals("AGENT", thread.get(1).get("sender").asText());
+        assertTrue(thread.get(1).get("body").asText().contains("como posso ajudar"));
+    }
+
+    @Test
+    void anAgentCannotChatOnAnotherAgentsInteraction() throws Exception {
+        String admin = login("admin", "admin123");
+        String loanId = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Chat X\",\"subject\":\"LOAN_CONTRACTING\"}").body()).get("id").asText();
+
+        // diego (Others) is not the assigned agent (Carla is), so he is refused.
+        String diego = login("diego", "agent123");
+        assertEquals(403, send("POST", "/api/interactions/" + loanId + "/messages", diego,
+                "{\"body\":\"intruso\"}").status());
+    }
+
+    @Test
     void rejectsInvalidInputWith400() throws Exception {
         String token = login("admin", "admin123");
         Resp res = send("POST", "/api/interactions", token,
@@ -233,5 +283,139 @@ class ApiIntegrationTest {
         // Cards starts idle in this fresh container: nothing in service to free.
         assertEquals(409, send("POST",
                 "/api/teams/11111111-1111-1111-1111-111111111111/advance-queue", token, null).status());
+    }
+
+    @Test
+    void publicStatusRevealsWhoIsServingTheCustomer() throws Exception {
+        String admin = login("admin", "admin123");
+        // Loans has a single agent (Carla), so this is assigned to her deterministically.
+        String id = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Quer Saber\",\"subject\":\"LOAN_CONTRACTING\"}").body())
+                .get("id").asText();
+
+        JsonNode status = json.readTree(send("GET", "/api/public/interactions/" + id, null, null).body());
+        assertEquals("Carla Nogueira", status.get("assignedAgentName").asText());
+    }
+
+    @Test
+    void agentEndsItsOwnConversationButNotAnothers() throws Exception {
+        String admin = login("admin", "admin123");
+        String id = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Encerrar\",\"subject\":\"LOAN_CONTRACTING\"}").body()).get("id").asText();
+
+        // diego (Others) isn't the assigned agent (Carla is): refused.
+        String diego = login("diego", "agent123");
+        assertEquals(403, send("POST", "/api/agent/conversations/" + id + "/end", diego, null).status());
+
+        // Carla owns it and may end it, freeing her slot.
+        String carla = login("carla", "agent123");
+        assertEquals(204, send("POST", "/api/agent/conversations/" + id + "/end", carla, null).status());
+        assertEquals(0, json.readTree(send("GET", "/api/agent/conversations", carla, null).body()).size());
+    }
+
+    @Test
+    void customerCanEndItsOwnInteractionWithoutAuth() throws Exception {
+        // Others has a free agent in a fresh container, so this goes straight into service.
+        String id = json.readTree(send("POST", "/api/public/interactions", null,
+                "{\"customerName\":\"Fecha\",\"subject\":\"OTHER\"}").body()).get("id").asText();
+
+        assertEquals(204, send("POST", "/api/public/interactions/" + id + "/end", null, null).status());
+        assertEquals("ENDED", json.readTree(send("GET", "/api/public/interactions/" + id, null, null).body())
+                .get("state").asText());
+    }
+
+    @Test
+    void adminMonitorListsLiveConversationsButAgentsCannot() throws Exception {
+        String admin = login("admin", "admin123");
+        send("POST", "/api/interactions", admin, "{\"customerName\":\"Vera\",\"subject\":\"CARD_ISSUE\"}");
+
+        JsonNode conversations = json.readTree(send("GET", "/api/admin/conversations", admin, null).body());
+        boolean found = false;
+        for (JsonNode c : conversations) {
+            if ("Vera".equals(c.get("customerName").asText())) {
+                found = true;
+                assertTrue(c.hasNonNull("agentName"));
+                assertEquals("Cards", c.get("teamName").asText());
+            }
+        }
+        assertTrue(found, "the admin monitor should list Vera's live conversation");
+
+        // The monitor is ADMIN only.
+        assertEquals(403, send("GET", "/api/admin/conversations", login("carla", "agent123"), null).status());
+    }
+
+    @Test
+    void adminResetEndsEverythingAndClearsTheQueues() throws Exception {
+        String admin = login("admin", "admin123");
+        // Fill Loans (single agent, 3 slots) and push extra contacts into the queue.
+        for (int i = 0; i < 5; i++) {
+            send("POST", "/api/interactions", admin,
+                    "{\"customerName\":\"R%d\",\"subject\":\"LOAN_CONTRACTING\"}".formatted(i));
+        }
+
+        assertEquals(204, send("POST", "/api/admin/reset", admin, null).status());
+
+        // The whole board is back to zero: no live conversations and Loans has no one waiting or in service.
+        assertEquals(0, json.readTree(send("GET", "/api/admin/conversations", admin, null).body()).size());
+        JsonNode teams = json.readTree(send("GET", "/api/dashboard", admin, null).body()).get("teams");
+        for (JsonNode team : teams) {
+            if ("Loans".equals(team.get("name").asText())) {
+                assertEquals(0, team.get("waiting").asLong());
+                for (JsonNode agent : team.get("agents")) {
+                    assertEquals(0, agent.get("currentLoad").asLong());
+                }
+            }
+        }
+
+        // The reset is ADMIN only.
+        assertEquals(403, send("POST", "/api/admin/reset", login("carla", "agent123"), null).status());
+    }
+
+    @Test
+    void adminHasNoPersonalConversationsAndAgentReadsItsOwnThread() throws Exception {
+        String admin = login("admin", "admin123");
+        String id = json.readTree(send("POST", "/api/interactions", admin,
+                "{\"customerName\":\"Le\",\"subject\":\"LOAN_CONTRACTING\"}").body()).get("id").asText();
+        send("POST", "/api/public/interactions/" + id + "/messages", null, "{\"body\":\"oi\"}");
+
+        // ADMIN represents no agent, so it is personally serving no one.
+        assertEquals(0, json.readTree(send("GET", "/api/agent/conversations", admin, null).body()).size());
+
+        // The owning agent can read the thread of its own interaction.
+        String carla = login("carla", "agent123");
+        assertTrue(json.readTree(send("GET", "/api/interactions/" + id + "/messages", carla, null).body())
+                .size() >= 1);
+    }
+
+    @Test
+    void publicStatusHasNoServingAgentWhileStillWaiting() throws Exception {
+        // Loans has one agent (3 slots): the 4th public contact waits, with no agent yet.
+        String waitingId = null;
+        for (int i = 0; i < 4; i++) {
+            waitingId = json.readTree(send("POST", "/api/public/interactions", null,
+                    "{\"customerName\":\"W%d\",\"subject\":\"LOAN_CONTRACTING\"}".formatted(i)).body())
+                    .get("id").asText();
+        }
+        JsonNode status = json.readTree(send("GET", "/api/public/interactions/" + waitingId, null, null).body());
+        assertEquals("WAITING", status.get("state").asText());
+        assertTrue(status.get("assignedAgentName").isNull(), "a waiting customer has no serving agent yet");
+    }
+
+    @Test
+    void everyResponseCarriesATraceId() throws Exception {
+        HttpResponse<String> res = http.send(HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/actuator/health"))
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertTrue(res.headers().firstValue("X-Trace-Id").isPresent(),
+                "every response should carry a trace id for correlation");
+    }
+
+    @Test
+    void reusesAnIncomingTraceId() throws Exception {
+        HttpResponse<String> res = http.send(HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/actuator/health"))
+                .header("X-Trace-Id", "trace-123")
+                .GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals("trace-123", res.headers().firstValue("X-Trace-Id").orElse(null));
     }
 }

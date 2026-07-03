@@ -28,15 +28,25 @@ fill agents (max 3 each) and then queue. End one and the next in line is picked 
 
 ### API
 
-| Method | Path                          | What it does                          |
-|--------|-------------------------------|---------------------------------------|
-| POST   | `/api/interactions`           | Open a contact (`customerName`, `subject`) |
-| POST   | `/api/interactions/{id}/end`  | Close a contact and pull the next in line |
-| POST   | `/api/teams/{teamId}/advance-queue` | Free a slot so the next in line is served |
-| GET    | `/api/dashboard`              | Current snapshot of teams/agents/queues |
-| WS     | `/ws` → `/topic/dashboard`    | Live distribution events (STOMP)      |
+| Method | Path                          | Role  | What it does                          |
+|--------|-------------------------------|-------|---------------------------------------|
+| POST   | `/api/interactions`           | ADMIN | Open a contact (`customerName`, `subject`) |
+| POST   | `/api/interactions/{id}/end`  | ADMIN | Close a contact and pull the next in line |
+| POST   | `/api/teams/{teamId}/advance-queue` | ADMIN/AGENT | Free a slot so the next in line is served |
+| GET    | `/api/dashboard`              | ADMIN/AGENT | Current snapshot of teams/agents/queues |
+| GET    | `/api/agent/conversations`    | AGENT | The customers this agent is serving now |
+| POST   | `/api/agent/conversations/{id}/end` | AGENT | Agent ends one of **its own** conversations |
+| GET/POST | `/api/interactions/{id}/messages` | AGENT | Read/reply on an owned conversation |
+| GET    | `/api/admin/conversations`    | ADMIN | Every live customer↔agent conversation |
+| POST   | `/api/admin/reset`            | ADMIN | End all interactions and clear all queues |
+| POST   | `/api/public/interactions`    | —     | Customer joins the queue (no login) |
+| GET    | `/api/public/interactions/{id}` | —   | Customer status + who is serving them |
+| POST   | `/api/public/interactions/{id}/end` | — | Customer ends its own conversation |
+| GET/POST | `/api/public/interactions/{id}/messages` | — | Customer chat thread |
+| WS     | `/ws` → `/topic/dashboard`, `/topic/chat.{id}` | — | Live distribution + chat events (STOMP) |
 
-`subject` is one of `CARD_ISSUE`, `LOAN_CONTRACTING`, `OTHER`.
+`subject` is one of `CARD_ISSUE`, `LOAN_CONTRACTING`, `OTHER`. Every response carries an
+`X-Trace-Id` header (see **Traceability** below).
 
 Interactive API docs (Scalar): http://localhost:8080/scalar
 (OpenAPI spec at `/v3/api-docs`).
@@ -90,6 +100,15 @@ distribution/
 
 - **Java 21 virtual threads** (`spring.threads.virtual.enabled=true`) so the blocking
   JDBC/queue calls scale cheaply.
+
+## Traceability
+
+Every request gets a correlation id. A `TraceIdFilter` (highest precedence) reuses an incoming
+`X-Trace-Id` header or mints a short one, puts it on the SLF4J MDC as `traceId`, and echoes it back
+on the response. The log pattern prints it (`%5p [%X{traceId:-}]`), so a single customer action —
+create → route → assign/queue → chat → end — can be followed end to end across the logs, even under
+concurrency. Business audit lines (interaction created/assigned/queued/ended, each chat message, the
+admin reset) are logged at `INFO`. Actuator exposes `health`, `info` and `metrics` at `/actuator`.
 
 ## Testing
 

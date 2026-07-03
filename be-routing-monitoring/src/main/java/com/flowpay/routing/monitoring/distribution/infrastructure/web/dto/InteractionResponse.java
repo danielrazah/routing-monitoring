@@ -12,14 +12,21 @@ public record InteractionResponse(
         String customerName,
         Subject subject,
         InteractionState state,
-        UUID assignedAgentId) {
+        UUID assignedAgentId,
+        String assignedAgentName) {
 
     public static InteractionResponse from(InteractionView view) {
+        return from(view, null);
+    }
+
+    /** Same, but resolving the serving agent's name so the customer screen can show who it is. */
+    public static InteractionResponse from(InteractionView view, String assignedAgentName) {
         return new InteractionResponse(
                 view.id(),
                 view.customerName(),
                 view.subject(),
                 view.state(),
-                view.assignedAgentId());
+                view.assignedAgentId(),
+                assignedAgentName);
     }
 }

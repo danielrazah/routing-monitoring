@@ -15,20 +15,26 @@ interactions are distributed across teams and lets an operator drive the flow.
 
 ```
 src/
-├── App.jsx                      # auth gate: login screen or dashboard
+├── App.jsx                      # pathname routing: landing / customer / dashboard
 ├── features/
-│   ├── auth/
-│   │   ├── authStore.js         # Zustand store (token/roles) + localStorage persist
-│   │   └── LoginPage.jsx
+│   ├── auth/                    # authStore (token/roles + persist) + LoginPage
+│   ├── landing/                 # LandingPage (customer vs. team entry)
+│   ├── customer/                # CustomerPage: join queue, see who serves you, chat, END
+│   ├── chat/                    # ChatThread: one component for customer / agent / admin (read-only)
 │   └── dashboard/
 │       ├── dashboardStore.js    # teams / events / status + refresh, serveNext
 │       ├── useDashboardLive.js  # WebSocket + polling lifecycle
 │       ├── api.js               # dashboard/interaction/team endpoints
 │       ├── DashboardPage.jsx
+│       ├── AgentConversations.jsx   # agent's dialogs: END + blink on new message
+│       ├── AdminConversations.jsx   # admin monitor of all live chats + "End all" reset
 │       └── components/          # Header, TeamCard, EventFeed, NewInteractionForm, CapacityMeter
 └── shared/
     ├── api/http.js              # fetch wrapper: adds Bearer, on 401/403 logs out
-    ├── api/realtime.js          # STOMP connection
+    ├── api/public.js            # customer queue (join / status / end), no auth
+    ├── api/chat.js              # agent + customer chat, agent END
+    ├── api/admin.js             # admin monitor + reset
+    ├── api/realtime.js          # STOMP connection (dashboard + per-chat topics)
     ├── i18n/i18n.js             # tiny pt/en dictionary picked by browser language
     └── constants/subjects.js
 ```
@@ -53,9 +59,17 @@ npm run build      # production bundle
 
 The dashboard requires login. The token (JWT) is stored by `authStore` and sent as
 `Authorization: Bearer …` on every API call; a 401/403 clears it and returns to the login
-screen. Two demo roles: **ADMIN** (creates/ends interactions and advances any queue, sees every
-team) and **AGENT** (scoped to its own team — the backend returns only that team's data; the agent
-can "Serve next" on that team's queue, but create/end stays ADMIN-only).
+screen. Two demo roles:
+
+- **ADMIN** — creates interactions, advances any queue, sees every team, **monitors every live
+  conversation** and has an **End all** button that ends all interactions and clears every queue
+  (a testing convenience).
+- **AGENT** — scoped to its own team (the backend returns only that team's data); can "Serve next"
+  on that team's queue, chat with its customers, **end its own conversations**, and sees a customer's
+  name **blink** when a new message arrives on a dialog it isn't looking at.
+
+The **customer** screen (`/atendimento`) needs no login: it shows **who is serving you** and lets
+you **end the conversation**. Every backend response carries an `X-Trace-Id` header for correlation.
 
 ## Internationalization
 

@@ -2,6 +2,7 @@ package com.flowpay.routing.monitoring.distribution.infrastructure.persistence.r
 
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.entity.InteractionJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,6 +14,9 @@ public interface InteractionJpaRepository extends JpaRepository<InteractionJpaEn
 
     /** The cases an agent is currently serving, used to reconstruct their live load. */
     List<InteractionJpaEntity> findByAssignedAgentIdAndState(UUID assignedAgentId, String state);
+
+    /** Every interaction in a given state (e.g. all IN_SERVICE, for the admin monitor/reset). */
+    List<InteractionJpaEntity> findByState(String state);
 
     /** How many cases an agent is serving right now, for the dashboard snapshot. */
     long countByAssignedAgentIdAndState(UUID assignedAgentId, String state);
@@ -43,4 +47,13 @@ public interface InteractionJpaRepository extends JpaRepository<InteractionJpaEn
             ORDER BY created_at
             """, nativeQuery = true)
     List<String> findServingCustomerNamesByAgent(@Param("agentId") UUID agentId);
+
+    /**
+     * Close every still-open interaction in one shot. Used by the ADMIN reset, which wipes the
+     * board for testing: with the queues also cleared, nothing gets pulled back into service.
+     * Returns how many rows were closed.
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE InteractionJpaEntity i SET i.state = 'ENDED' WHERE i.state <> 'ENDED'")
+    int endAllActive();
 }

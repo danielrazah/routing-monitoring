@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { SUBJECT_VALUES } from '../../shared/constants/subjects.js'
-import { joinQueue, fetchInteractionStatus } from '../../shared/api/public.js'
+import { joinQueue, fetchInteractionStatus, endMyInteraction } from '../../shared/api/public.js'
 import { connectDashboard } from '../../shared/api/realtime.js'
+import ChatThread from '../chat/ChatThread.jsx'
 import { t, tv } from '../../shared/i18n/i18n.js'
 import ubotsLogo from '../../assets/ubots-logo.png'
 
@@ -12,11 +13,13 @@ const POLL_INTERVAL_MS = 3000
 const isBeingServed = (state) => !!state && state !== 'WAITING'
 
 export default function CustomerPage() {
-  const [phase, setPhase] = useState('form') // 'form' | 'waiting' | 'served'
+  const [phase, setPhase] = useState('form') // 'form' | 'waiting' | 'served' | 'ended'
   const [customerName, setCustomerName] = useState('')
   const [subject, setSubject] = useState(SUBJECT_VALUES[0])
   const [interactionId, setInteractionId] = useState(null)
+  const [agentName, setAgentName] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [ending, setEnding] = useState(false)
   const [error, setError] = useState(null)
 
   async function submit(event) {
@@ -27,6 +30,7 @@ export default function CustomerPage() {
     try {
       const created = await joinQueue(customerName.trim(), subject)
       setInteractionId(created.id)
+      setAgentName(created.assignedAgentName ?? null)
       setPhase(isBeingServed(created.state) ? 'served' : 'waiting')
     } catch {
       setError(t('customer.error'))
@@ -60,9 +64,47 @@ export default function CustomerPage() {
     }
   }, [phase, interactionId])
 
+  // While served: learn who is serving us, and notice if the agent ends the conversation.
+  useEffect(() => {
+    if (phase !== 'served' || !interactionId) return
+    let active = true
+
+    const check = async () => {
+      try {
+        const status = await fetchInteractionStatus(interactionId)
+        if (!active) return
+        if (status.state === 'ENDED') setPhase('ended')
+        else setAgentName(status.assignedAgentName ?? null)
+      } catch {
+        /* transient: keep the current view */
+      }
+    }
+
+    check()
+    const poll = setInterval(check, POLL_INTERVAL_MS)
+    return () => {
+      active = false
+      clearInterval(poll)
+    }
+  }, [phase, interactionId])
+
+  async function endChat() {
+    if (!interactionId) return
+    setEnding(true)
+    try {
+      await endMyInteraction(interactionId)
+      setPhase('ended')
+    } catch {
+      /* the poll will reconcile */
+    } finally {
+      setEnding(false)
+    }
+  }
+
   function startOver() {
     setPhase('form')
     setInteractionId(null)
+    setAgentName(null)
     setCustomerName('')
     setSubject(SUBJECT_VALUES[0])
   }
@@ -125,19 +167,45 @@ export default function CustomerPage() {
         )}
 
         {phase === 'served' && (
-          <div className="text-center">
-            <div
-              role="img"
-              aria-label={t('customer.welcome')}
-              className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-teal-400 text-3xl shadow-lg shadow-teal-500/20"
+          <div>
+            <div className="mb-4 flex items-center gap-3">
+              <div
+                role="img"
+                aria-label={t('customer.welcome')}
+                className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500/15 text-xl ring-1 ring-emerald-500/30 shadow-lg shadow-emerald-500/10"
+              >
+                👋
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-teal-300">{t('customer.servedTitle')}</h2>
+                <p className="text-[11px] text-slate-400">
+                  {agentName ? t('customer.servedBy', { name: agentName }) : t('customer.chatHint')}
+                </p>
+              </div>
+            </div>
+
+            <ChatThread interactionId={interactionId} variant="public" />
+
+            <button
+              onClick={endChat}
+              disabled={ending}
+              className="mt-3 w-full rounded-xl bg-rose-500/15 px-4 py-2 text-xs font-medium text-rose-200 ring-1 ring-rose-500/30 transition hover:bg-rose-500/25 disabled:opacity-50"
             >
+              {ending ? t('customer.ending') : t('customer.endChat')}
+            </button>
+          </div>
+        )}
+
+        {phase === 'ended' && (
+          <div className="text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-slate-500/15 text-xl ring-1 ring-slate-500/30">
               👋
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-teal-300">{t('customer.servedTitle')}</h2>
-            <p className="mt-1 text-sm text-slate-400">{t('customer.servedBody')}</p>
+            <h2 className="mt-4 text-base font-semibold">{t('customer.endedTitle')}</h2>
+            <p className="mt-1 text-sm text-slate-400">{t('customer.endedBody')}</p>
             <button
               onClick={startOver}
-              className="mt-6 w-full rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-slate-700"
+              className="mt-4 w-full rounded-xl bg-slate-800 px-4 py-2 text-xs font-medium text-slate-300 transition hover:bg-slate-700"
             >
               {t('customer.newContact')}
             </button>

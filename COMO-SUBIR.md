@@ -68,17 +68,53 @@ para o atendente real que representa (`app_user.agent_id`).
 4. Clique em **Atender próximo** no card do time para liberar uma vaga e puxar o
    próximo da fila.
 
-Pelo terminal, o mesmo fluxo:
+**Chat cliente↔agente:** abra http://localhost:8090/atendimento numa aba e entre na fila (ex.:
+*Contratação de empréstimo*). Noutra aba, entre no dashboard como o agente daquele time (ex.:
+`carla`/`agent123` para Empréstimos): no painel **Meus atendimentos** aparece o cliente. Troquem
+mensagens — os dois veem a conversa em tempo real, com um diálogo por cliente atendido.
+
+**Encerrar o atendimento (dos dois lados).** Na tela do cliente (`/atendimento`) aparece **quem
+está atendendo** e um botão **Encerrar atendimento**; ao encerrar, o cliente sai da fila do agente
+e a vaga é liberada (o próximo da fila entra). No dashboard, em **Meus atendimentos**, o agente
+também encerra o atendimento selecionado pelo botão **Encerrar atendimento**. Se um lado encerra, o
+outro percebe em tempo real.
+
+**Indicador de nova mensagem.** Em **Meus atendimentos**, quando chega uma mensagem nova de um
+cliente cujo diálogo **não** está aberto, o nome dele **pisca** (com um ponto âmbar) até o agente
+abrir a conversa.
+
+**Perfil admin.** Além de tudo do agente, o `admin` tem dois recursos no dashboard:
+- **Conversas ao vivo** — vê, em tempo real, **todas** as conversas cliente↔atendente de todos os
+  times (somente leitura), uma ao lado da outra.
+- **Encerrar tudo** — um botão que **encerra todos os atendimentos e esvazia todas as filas**,
+  zerando o quadro para facilitar os testes (pede confirmação).
+
+Pelo terminal, os mesmos fluxos:
 
 ```bash
-# criar um atendimento
+# criar um atendimento (ADMIN)
 curl -X POST http://localhost:8080/api/interactions \
-  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"customerName":"Maria","subject":"LOAN_CONTRACTING"}'
 
 # adiantar a fila de um time (libera uma vaga)
-curl -X POST http://localhost:8080/api/teams/{teamId}/advance-queue
+curl -X POST http://localhost:8080/api/teams/{teamId}/advance-queue -H "Authorization: Bearer $TOKEN"
+
+# o agente encerra um atendimento dele
+curl -X POST http://localhost:8080/api/agent/conversations/{id}/end -H "Authorization: Bearer $TOKEN"
+
+# o cliente encerra o próprio atendimento (sem login)
+curl -X POST http://localhost:8080/api/public/interactions/{id}/end
+
+# admin: ver todas as conversas ao vivo / zerar o quadro
+curl http://localhost:8080/api/admin/conversations -H "Authorization: Bearer $TOKEN"
+curl -X POST http://localhost:8080/api/admin/reset -H "Authorization: Bearer $TOKEN"
 ```
+
+> **Rastreabilidade.** Toda resposta HTTP carrega um cabeçalho `X-Trace-Id` (reaproveitado se você
+> mandar o seu, ou gerado quando falta). Esse id aparece em cada linha de log do backend, então dá
+> para seguir uma ação — criar, distribuir, enfileirar, atender, encerrar, cada mensagem de chat —
+> de ponta a ponta. Veja *Rastreabilidade* no `DECISOES.md`.
 
 > O idioma do dashboard segue o idioma do navegador (pt ou en).
 

@@ -1,196 +1,136 @@
 # Decisões de projeto
 
-Resumo curto do que foi escolhido e por quê. O sistema distribui atendimentos entre
-times (Cartões, Empréstimos, Outros): cada atendente cuida de no máximo 3 ao mesmo
-tempo e, quando o time lota, o cliente espera numa fila e entra assim que abre uma vaga.
+Sistema de distribuição de atendimentos entre times (Cartões, Empréstimos, Outros).
+Cada atendente atende no máximo 3 simultâneos; ao lotar, o cliente entra numa fila e
+é puxado assim que abre vaga.
 
-## Stack: Java 21, Gradle e Spring Boot 4.1
+## Stack
 
-- **Java 21 (LTS).** É a versão de suporte longo atual. Traz as *virtual threads* que usamos
-  para escalar chamadas bloqueantes de forma barata, e recursos como `record`, `sealed` e
-  *pattern matching* em `switch` — que deixam o domínio (eventos, resultados) enxuto e
-  seguro, sem código repetitivo.
-
-- **Gradle em vez de Maven.** Build em Kotlin DSL (tipado, com autocomplete na IDE), mais
-  conciso que o XML do Maven e mais rápido no dia a dia (build incremental e cache). É
-  também o padrão do Spring Initializr.
-
-- **Spring Boot 4.1.** Versão mais recente, sobre o Spring Framework 7. É modular — cada
-  recurso é um *starter* próprio, então o app só carrega o que usa — e tem suporte nativo a
-  virtual threads e a Problem Details (RFC 9457), ambos aproveitados aqui. Por ser novo,
-  exigiu alguns ajustes de dependência (ver *Compatibilidade Spring Boot 4.1*, no fim).
+- **Java 21 (LTS)** — virtual threads para chamadas bloqueantes; `record`/`sealed`/pattern
+  matching para domínio enxuto.
+- **Gradle (Kotlin DSL)** — build tipado, incremental, padrão do Spring Initializr.
+- **Spring Boot 4.1 / Spring Framework 7** — starters modulares, virtual threads nativas,
+  Problem Details (RFC 9457).
 
 ## Idioma
 
-- **Código e comentários em inglês** (padrão de mercado, facilita colaboração).
-- **Interface em pt/en**, escolhida automaticamente pelo idioma do navegador.
+Código/comentários em inglês. UI em pt/en conforme idioma do navegador.
 
 ## Arquitetura — Clean Architecture pragmática
 
-Isolamento rigoroso **só no núcleo de negócio**; no resto, Spring direto (sem cerimônia).
-Tudo vive num módulo `distribution` no estilo Ports & Adapters:
+Isolamento só no núcleo de negócio; resto usa Spring direto. Módulo `distribution`,
+Ports & Adapters:
 
 ```
-domain/          Java puro, sem Spring e sem JPA
+domain/          Java puro (sem Spring/JPA)
   model/         Interaction, Agent, Team, Subject, WaitingQueue, InteractionState
-  event/         eventos de domínio (sealed DomainEvent)
+  event/         sealed DomainEvent
   routing/       RoutingStrategy + SubjectRouter (Strategy)
   service/       DistributionService (aloca ou enfileira)
-  port/in|out/   interfaces dos casos de uso e dos repositórios/gateways
-application/     implementação dos casos de uso, @Transactional
-infrastructure/  Spring: web, persistência (JPA), websocket, wiring
+  port/in|out/   casos de uso / repositórios-gateways
+application/     casos de uso, @Transactional
+infrastructure/  web, JPA, websocket, wiring
 ```
-
-**Por quê:** as regras que não podem quebrar (limite de 3, ciclo do atendimento) ficam
-protegidas e testáveis sem framework; o resto usa Spring sem abstrações desnecessárias.
 
 ## Decisões principais
 
-- **Regras dentro do modelo.** O `Agent` garante o limite de 3 dentro do `assign`; o
-  `Interaction` controla seu ciclo `WAITING → IN_SERVICE → ENDED`. Não dá para burlar de
-  fora. O `DistributionService` é lógica pura: escolhe o atendente menos ocupado ou manda
-  para a fila.
+- **Invariantes no modelo.** `Agent.assign` garante limite de 3; `Interaction` controla
+  `WAITING → IN_SERVICE → ENDED`. `DistributionService` é lógica pura (menos ocupado ou fila).
+- **Strategy por time (Open/Closed).** Time novo = classe nova + `@Bean`.
+- **Fila = tabela Postgres, não broker.** `SELECT ... FOR UPDATE SKIP LOCKED` garante
+  consumo concorrente seguro sem RabbitMQ/ActiveMQ dedicado.
+- **Eventos de domínio via port `EventPublisher`.** Adapter Spring publica no event bus;
+  listener converte para WebSocket após o commit. Domínio não conhece WebSocket.
 
 
-
-- **Strategy para roteamento (Open/Closed).** Cada time é uma `RoutingStrategy`. Um time
-  novo = uma classe nova + uma linha de `@Bean`; nada existente muda.
-
-
-
-
-- **A fila é uma tabela no Postgres, não um broker.** A fila é regra de negócio: ordenada,
-  persistente, por time. Consumimos com `SELECT ... FOR UPDATE SKIP LOCKED`, o que dá
-  consumo concorrente seguro (dois atendentes terminando juntos nunca pegam o mesmo
-  cliente) sem precisar subir RabbitMQ/ActiveMQ só para isso.
-
+- **Transporte real-time plugável, broker por padrão.** STOMP/WebSocket no `/topic`,
+  propriedade `distribution.realtime.transport`:
+  - `broker`: relay para RabbitMQ — N instâncias compartilham tópico (escala horizontal).
+    Padrão em `docker compose up` e `application.properties`.
+  - `simple`: broker em memória, sem infra extra; cada instância só alcança seus próprios
+    clientes. Opt-out via `REALTIME_TRANSPORT=simple`, útil em dev local.
+  - Entrega é best-effort pós-commit: broker ausente nunca quebra negócio
+    (`DashboardNotifier` engole/loga falha; dashboard cai em polling). Testes fixam
+    `simple` via `@TestPropertySource`. Fila de atendimento continua no Postgres em
+    qualquer modo — broker é só transporte de notificação.
 
 
+- **Chat cliente↔agente reusa o mesmo transporte.** Tabela `message` (V6), publicada em
+  `/topic/chat/{interactionId}`. Cliente usa endpoints públicos; agente usa autenticados
+  restritos ao próprio `agent_id`. Frontend: um único `ChatThread` para cliente/agente/admin.
+- **Encerramento dos dois lados reusa `EndInteraction`.** Agente:
+  `POST /api/agent/conversations/{id}/end` (checagem de posse). Cliente:
+  `POST /api/public/interactions/{id}/end` (sem login). Lado oposto percebe via polling.
+- **Indicador de nova mensagem** é estado só de frontend (`animate-blink` quando chega
+  mensagem de conversa não selecionada).
+- **Admin: monitor + reset**, sem regra de negócio, direto nos repositórios JPA:
+  - `GET /api/admin/conversations` — lista tudo, `ChatThread` somente leitura por conversa.
+  - `POST /api/admin/reset` — limpa filas e marca tudo `ENDED` numa transação; carga do
+    atendente é derivada do estado, logo libera vagas automaticamente.
+- **Infra em Spring puro** (controllers, repositórios JPA, snapshot) — sem abstração
+  desnecessária.
+- **Persistência separada do domínio.** Entidades JPA próprias + mappers. Carga do
+  atendente é derivada (nunca dessincroniza).
+- **API limpa.** DTOs = records; erros = Problem Details (404/409/422/400). Entidades JPA
+  nunca vazam na API.
+- **Docs via springdoc + Scalar** em `/scalar` (mais enxuto que Swagger UI); spec em
+  `/v3/api-docs`.
+- **Virtual threads ligadas** (`spring.threads.virtual.enabled=true`).
+- **"Atender próximo"** por time: encerra o mais antigo em atendimento, reusando
+  `EndInteraction` e puxando o próximo da fila.
 
-- **Eventos de domínio desacoplam as pontas.** O núcleo publica por um port `EventPublisher`;
-  um adapter Spring joga no event bus e um listener converte em mensagem WebSocket **depois
-  do commit**. O domínio não sabe que WebSocket existe.
+## Observabilidade
 
+- **`TraceIdFilter`** (prioridade máxima): reaproveita `X-Trace-Id` recebido ou gera um
+  novo; vai pro MDC (`traceId`) e volta no header de resposta; limpo no `finally`.
+- **Log de auditoria em INFO**: criação/alocação/enfileiramento/encerramento, mensagens de
+  chat, reset admin — materializa os eventos de domínio já existentes.
+- **Sem infra nova.** Correlação leve (MDC + header) em vez de OTel/Tempo/Jaeger; caminho
+  de evolução aditivo (Micrometer Tracing + OTLP). Actuator expõe `health`/`info`/`metrics`.
 
-
-- **Transporte do tempo real é plugável, com o broker como padrão (pensando em escala
-  horizontal).** O push para o dashboard é STOMP sobre WebSocket, e o *broker* que serve o
-  `/topic` é escolhido por propriedade `distribution.realtime.transport`:
-  - `broker`: faz **relay do `/topic` para um broker STOMP externo** (RabbitMQ). Assim
-    **N instâncias do backend compartilham o mesmo tópico** — um evento gerado em qualquer
-    instância chega aos dashboards conectados a *todas* elas. É isso que viabiliza rodar o
-    backend atrás de um load balancer com várias réplicas (**escala horizontal**). É o
-    **padrão ao subir com Docker** (`docker compose up` já sobe o RabbitMQ e liga o relay).
-    É o **padrão da aplicação** (`application.properties`: `distribution.realtime.transport=broker`),
-    logo `docker compose up` e `gradlew bootRun` já sobem em modo broker.
-  - `simple`: broker **em memória**. Zero infra extra, ideal para uma instância; cada
-    instância só alcança os dashboards conectados a ela mesma. Fica como **opção** de opt-out
-    (`REALTIME_TRANSPORT=simple`), útil no desenvolvimento local sem um broker.
-
-  **Default é `broker` em todo lugar.** Como a entrega de eventos é **best-effort e acontece
-  depois do commit**, um broker ausente ou ainda conectando **nunca quebra a operação de
-  negócio**: o `DashboardNotifier` engole e loga a falha de envio, e o dashboard cai no
-  *polling*. Por isso o broker pode ser o padrão sem risco mesmo rodando local sem RabbitMQ.
-  A **suíte de testes** fixa `transport=simple` (via `@TestPropertySource`), para não exigir
-  um broker externo no CI.
-
-  O ponto-chave é que **nada** no código que publica muda (`DashboardNotifier` só ganhou o
-  tratamento best-effort; `SimpMessagingTemplate` é o mesmo) e o **frontend também não muda** —
-  só a configuração do broker. A fila de atendimento **continua no Postgres** (`SKIP LOCKED`):
-  o broker aqui é só o transporte de notificações em tempo real, não a linha de espera (ver a
-  decisão acima sobre por que a fila é uma tabela, e não um broker). Ver *Modo simple (opcional)*
-  no `COMO-SUBIR.md`.
-
-
-
-- **Spring direto na infraestrutura.** Controllers, repositórios JPA e o endpoint de
-  snapshot são Spring puro. O snapshot é só uma consulta (sem regra), então lê os
-  repositórios direto, sem inventar um port.
-
-
-
-- **Persistência separada do domínio.** Entidades JPA são classes próprias; mappers
-  convertem para o domínio. A carga do atendente não é armazenada — é derivada dos
-  atendimentos em andamento, então nunca fica dessincronizada.
-
-
-
-- **API limpa.** DTOs são records; erros viram Problem Details (RFC 9457) — 404 para não
-  encontrado, 409 para regra violada, 422 para roteamento, 400 para entrada inválida.
-  Entidades JPA nunca aparecem na API.
-
-
-
-- **Documentação da API.** O spec OpenAPI é gerado pelo springdoc e renderizado pelo
-  **Scalar** (uma UI de referência moderna) em `/scalar`, em tema escuro por padrão. O JSON
-  do spec fica em `/v3/api-docs`. Preferi o Scalar ao Swagger UI por ser mais enxuto e
-  legível.
-
-
-
-- **Virtual threads (Java 21).** `spring.threads.virtual.enabled=true`: chamadas JDBC/fila
-  bloqueantes ganham uma thread barata cada e escalam bem.
-
-
-
-- **"Atender próximo".** Botão por time que libera uma vaga (encerra o atendimento mais
-  antigo em andamento), o que reaproveita o `EndInteraction` e puxa o próximo da fila.
-
-
+> Nenhum recurso deste ciclo exigiu mudança no `docker-compose` — tudo roda sobre a infra
+> já existente (Postgres, broker STOMP, mesmo backend).
 
 ## Segurança
 
-Há dois perfis de acesso por **role**:
-- **`ADMIN`**: cria e encerra atendimentos, atende **qualquer** fila e enxerga **todos os times**.
-- **`AGENT`**: vê o dashboard **restrito ao time a que pertence** (coluna `app_user.team_id`) e pode
-  **atender a fila daquele time** ("Atender próximo"); não cria/encerra atendimentos nem age em
-  outros times.
-Criar/encerrar exigem **`ADMIN`**; `advance-queue` aceita `ADMIN` ou `AGENT`. Login, documentação
-(Scalar) e health check permanecem públicos.
-No frontend, o token é armazenado e enviado como `Bearer`, com redirecionamento para a tela de login em respostas **401** ou **403**.
-
-**Escopo por time.** No login, se o usuário é um `AGENT`, o time dele entra como *claim* `teamId`
-no JWT. O snapshot (`/api/dashboard`) lê esse claim e **filtra a resposta para aquele único time**;
-e o `advance-queue` **recusa (403)** se o `teamId` do path não for o do agente. Sem o claim (ADMIN),
-vê e opera todos. Assim a regra de escopo vive no backend — o frontend só renderiza o que recebe.
-
-**Relação usuário ↔ atendente.** Além do time, cada login `AGENT` aponta para o **atendente real**
-que representa (`app_user.agent_id` → `agent.id`); como os ids de `agent` são aleatórios, o `V4`
-faz o vínculo por nome. No dashboard, quando um time tem mais de dois atendentes, ao passar o mouse
-na linha do atendente aparecem os clientes que **ele** está atendendo (por-agente, via `AgentSnapshot.serving`).
-
-A autenticação usa **JWT stateless** (Spring Security como *resource server*; token HMAC assinado/validado com o Nimbus). Os usuários ficam **persistidos no Postgres** (tabela `app_user`, com senha em hash BCrypt, `team_id` e `agent_id` opcionais), semeados via Flyway (`V2` cria `admin`; `V3` troca o antigo `viewer` pelos agentes, cada um ligado a um time; `V4` liga cada agente ao seu `agent` e adiciona o `bruno` no time Cartões). Um `UserDetailsService` lê o usuário e sua role do banco; trocar por outro provedor é só reimplementar essa interface.
+- **`ADMIN`**: cria/encerra atendimentos, vê e opera todos os times, endpoints `/api/admin/**`.
+- **`AGENT`**: dashboard restrito ao próprio time (`app_user.team_id`), só "Atender próximo"
+  do próprio time.
+- `advance-queue` aceita `ADMIN` ou `AGENT`; agente só encerra atendimento próprio
+  (checagem de posse no controller). `/api/public/**` fica aberto (sem login) para o
+  cliente. Login, Scalar e health são públicos. Token `Bearer`, redirect ao login em 401/403.
+- **Escopo por time via JWT claim `teamId`** (só para AGENT): `/api/dashboard` filtra por
+  esse time; `advance-queue` recusa (403) se o `teamId` do path não bater. ADMIN sem claim
+  vê/opera tudo.
+- **`app_user.agent_id → agent.id`** liga login ao atendente real (vínculo por nome no `V4`,
+  já que ids de `agent` são aleatórios). Hover na linha do atendente mostra seus clientes
+  (`AgentSnapshot.serving`).
+- **JWT stateless** (Spring Security resource server, HMAC via Nimbus). Usuários no Postgres
+  (`app_user`, senha BCrypt, `team_id`/`agent_id` opcionais), seed via Flyway
+  (`V2` admin, `V3` agentes por time, `V4` vínculo agente↔`agent` + `bruno` em Cartões).
+  Provedor trocável via `UserDetailsService`.
 
 ## Frontend
 
-React + Vite + Tailwind. Paleta em azul-marinho/índigo com acentos em teal/esmeralda,
-passando tecnologia, segurança e conforto. O feed ao vivo resolve os IDs para nomes de
-time/atendente e mostra frases legíveis em vez de UUIDs.
+React + Vite + Tailwind, paleta azul-marinho/índigo com acentos teal/esmeralda. Feed ao
+vivo resolve IDs para nomes legíveis.
 
-O estado global fica em **Zustand** — `authStore` (token persistido em localStorage) e
-`dashboardStore` (times/eventos/status + ações). O código é organizado **por feature**
-(`features/auth`, `features/dashboard`) sobre um `shared/` comum (cliente HTTP que injeta o
-`Bearer` e trata 401/403, realtime, i18n e constantes); o ciclo de WebSocket + polling vive
-num hook (`useDashboardLive`), deixando as páginas e componentes enxutos.
+Estado global em **Zustand** (`authStore` com token em localStorage, `dashboardStore` para
+times/eventos/status). Organização por feature (`features/auth`, `features/dashboard`)
+sobre `shared/` (cliente HTTP com `Bearer` + tratamento 401/403, realtime, i18n,
+constantes). WebSocket + polling encapsulados em `useDashboardLive`.
 
 ## Testes
 
-**Backend** (JUnit 5, Mockito, Testcontainers):
-- **Unitários puros** (sem Spring/banco) cobrindo domínio (regra dos 3, ciclo, roteamento,
-  fila) e os casos de uso.
-- **Integração** com Testcontainers: o `SKIP LOCKED` num Postgres real e um teste que sobe o
-  servidor (porta aleatória) exercitando toda a superfície HTTP — auth, roles, ciclo do
-  atendimento, fila e erros (400/401/403/404/409).
-- Cobertura por **JaCoCo** (`./gradlew test` gera o relatório em
-  `build/reports/jacoco/test/html/`): **~100% de linhas** (config, bootstrap e entidades JPA
-  ficam de fora da métrica, por serem "boilerplate").
+**Backend** (JUnit 5, Mockito, Testcontainers): unitários puros de domínio (regra dos 3,
+ciclo, roteamento, fila) e casos de uso; integração com Testcontainers cobrindo
+`SKIP LOCKED` em Postgres real e toda a superfície HTTP (auth, roles, ciclo, fila,
+erros 400/401/403/404/409). Cobertura JaCoCo ~100% (exclui config/bootstrap/entidades JPA).
 
-**Frontend** (Vitest + Testing Library + jsdom):
-- Testes de stores, i18n, cliente HTTP, realtime, hook e componentes, em `src/test/`
-  espelhando `src/`. Cobertura **~99% de linhas** (`npm run coverage`, relatório em
-  `coverage/`).
+**Frontend** (Vitest + Testing Library + jsdom): stores, i18n, cliente HTTP, realtime,
+hook, componentes. Cobertura ~99%.
 
 ## Git
 
-Trabalho dividido em branches pequenas por assunto (`feat/…`, `fix/…`, `chore/…`, `docs/…`),
-com Conventional Commits e um commit por camada, integradas na `main` via pull request.
+Branches pequenas por assunto (`feat/`, `fix/`, `chore/`, `docs/`), Conventional Commits,
+um commit por camada, merge na `main` via PR.

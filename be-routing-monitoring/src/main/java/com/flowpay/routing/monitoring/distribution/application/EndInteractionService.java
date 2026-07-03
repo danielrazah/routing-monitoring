@@ -11,6 +11,8 @@ import com.flowpay.routing.monitoring.distribution.domain.port.out.AgentReposito
 import com.flowpay.routing.monitoring.distribution.domain.port.out.EventPublisher;
 import com.flowpay.routing.monitoring.distribution.domain.port.out.InteractionRepository;
 import com.flowpay.routing.monitoring.distribution.domain.port.out.WaitingQueuePort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import java.util.UUID;
  */
 @Service
 public class EndInteractionService implements EndInteraction {
+
+    private static final Logger log = LoggerFactory.getLogger(EndInteractionService.class);
 
     private final InteractionRepository interactions;
     private final AgentRepository agents;
@@ -55,6 +59,7 @@ public class EndInteractionService implements EndInteraction {
         agent.release(interactionId);
         UUID teamId = agent.teamId();
         events.publish(InteractionEnded.now(interactionId, agentId, teamId));
+        log.info("Interaction {} ended; freed a slot on agent {} (team {})", interactionId, agentId, teamId);
 
         // The slot that just opened goes to whoever has been waiting longest for this team.
         // SKIP LOCKED in the adapter makes sure two agents finishing at once don't grab the same person.
@@ -64,6 +69,7 @@ public class EndInteractionService implements EndInteraction {
             agent.assign(next);
             interactions.save(next);
             events.publish(InteractionAssigned.now(next.id(), agent.id(), teamId));
+            log.info("Interaction {} pulled from the queue into service on agent {}", next.id(), agent.id());
         });
 
         agents.save(agent);
