@@ -91,8 +91,6 @@ em "Você está na fila".
 1. Em uma janela **anônima** (para não conflitar com o login do agente), abra `/painel` e entre como
    **`admin` / `admin123`**.
 2. O admin vê **todos os times** e tem, no painel:
-   - **Novo atendimento** — crie contatos de qualquer assunto para popular a operação (útil para
-     encher filas rapidamente sem abrir várias abas de cliente).
    - **Conversas ao vivo** — lista **todas** as conversas cliente↔agente em andamento. Clique em uma
      para acompanhar o diálogo **em tempo real** (somente leitura).
    - **Encerrar tudo** — encerra **todos** os atendimentos e **esvazia todas as filas**, zerando o

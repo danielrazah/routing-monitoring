@@ -46,13 +46,13 @@ Quem quiser o modo enxuto de uma instância só (broker em memória, sem RabbitM
 O dashboard exige login. Contas de demonstração:
 OBS: Para facilitar a avaliação, há dois perfis para emular o uso de Roles do Spring Security.
 
-| Usuário  | Senha      | Perfil                                                             |
-|----------|------------|-------------------------------------------------------------------|
-| `admin`  | `admin123` | ADMIN — cria/encerra atendimentos, atende qualquer fila, vê **todos** os times |
-| `ana`    | `agent123` | AGENT — time Cartões (atende a própria fila)                       |
-| `bruno`  | `agent123` | AGENT — time Cartões (atende a própria fila)                       |
-| `carla`  | `agent123` | AGENT — time Empréstimos (atende a própria fila)                   |
-| `diego`  | `agent123` | AGENT — time Outros (atende a própria fila)                        |
+| Usuário  | Senha      | Perfil                                           |
+|----------|------------|--------------------------------------------------|
+| `admin`  | `admin123` | ADMIN — vê **todos** os times                    |
+| `ana`    | `agent123` | AGENT — time Cartões (atende a própria fila)     |
+| `bruno`  | `agent123` | AGENT — time Cartões (atende a própria fila)     |
+| `carla`  | `agent123` | AGENT — time Empréstimos (atende a própria fila) |
+| `diego`  | `agent123` | AGENT — time Outros (atende a própria fila)      |
 
 Um `AGENT` entra e vê **somente o time a que pertence** (definido no banco, `app_user.team_id`) e
 pode **"Atender próximo"** na fila **daquele** time — mas **não** cria/encerra atendimentos nem
