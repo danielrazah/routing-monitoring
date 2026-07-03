@@ -14,8 +14,23 @@ com um comando via Docker Compose.
 
 ## Pré-requisitos
 
-- Docker e Docker Compose.
-- Só isso: o backend e o frontend são compilados dentro dos próprios containers.
+- **Docker** e **Docker Compose** instalados. É o único requisito: o backend e o frontend são
+  compilados dentro dos próprios containers.
+- No **macOS** e no **Windows**, o Docker Compose já vem incluído no **Docker Desktop**. No
+  **Linux**, ele vem junto ao instalar o **Docker Engine** (plugin `docker compose`) ou o Docker Desktop.
+
+| Sistema  | Instalação                                                                 |
+|----------|----------------------------------------------------------------------------|
+| macOS    | Docker Desktop — https://docs.docker.com/desktop/setup/install/mac-install/     |
+| Windows  | Docker Desktop — https://docs.docker.com/desktop/setup/install/windows-install/ |
+| Linux    | Docker Engine + Compose — https://docs.docker.com/engine/install/ (ou Docker Desktop: https://docs.docker.com/desktop/setup/install/linux/) |
+
+Confira a instalação (Compose v2 é o comando `docker compose`, com espaço):
+
+```bash
+docker --version
+docker compose version
+```
 
 ## Subir tudo
 
