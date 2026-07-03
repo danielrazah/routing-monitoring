@@ -4,8 +4,11 @@ import com.flowpay.routing.monitoring.distribution.domain.exception.InteractionN
 import com.flowpay.routing.monitoring.distribution.domain.model.Interaction;
 import com.flowpay.routing.monitoring.distribution.domain.port.in.CreateInteraction;
 import com.flowpay.routing.monitoring.distribution.domain.port.in.CreateInteraction.NewInteractionCommand;
+import com.flowpay.routing.monitoring.distribution.domain.port.in.EndInteraction;
 import com.flowpay.routing.monitoring.distribution.domain.port.in.InteractionView;
 import com.flowpay.routing.monitoring.distribution.domain.port.out.InteractionRepository;
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.entity.AgentJpaEntity;
+import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.AgentJpaRepository;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.CreateInteractionRequest;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.InteractionResponse;
 import com.flowpay.routing.monitoring.distribution.infrastructure.web.dto.MessageResponse;
@@ -14,6 +17,8 @@ import com.flowpay.routing.monitoring.distribution.infrastructure.websocket.Chat
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,15 +42,23 @@ import java.util.UUID;
 @RequestMapping("/api/public/interactions")
 public class PublicInteractionController {
 
+    private static final Logger log = LoggerFactory.getLogger(PublicInteractionController.class);
+
     private final CreateInteraction createInteraction;
+    private final EndInteraction endInteraction;
     private final InteractionRepository interactions;
+    private final AgentJpaRepository agents;
     private final ChatService chat;
 
     public PublicInteractionController(CreateInteraction createInteraction,
+                                       EndInteraction endInteraction,
                                        InteractionRepository interactions,
+                                       AgentJpaRepository agents,
                                        ChatService chat) {
         this.createInteraction = createInteraction;
+        this.endInteraction = endInteraction;
         this.interactions = interactions;
+        this.agents = agents;
         this.chat = chat;
     }
 
@@ -61,12 +74,33 @@ public class PublicInteractionController {
     }
 
     @Operation(summary = "Check my interaction",
-            description = "Lets the customer screen see when it flips from WAITING to IN_SERVICE.")
+            description = "Lets the customer screen see when it flips from WAITING to IN_SERVICE, "
+                    + "and who is serving it.")
     @GetMapping("/{id}")
     public InteractionResponse status(@PathVariable UUID id) {
         Interaction interaction = interactions.findById(id)
                 .orElseThrow(() -> new InteractionNotFoundException(id));
-        return InteractionResponse.from(InteractionView.of(interaction));
+        return InteractionResponse.from(InteractionView.of(interaction), servingAgentName(interaction));
+    }
+
+    /** The name of the agent serving this interaction, or null while it is still waiting. */
+    private String servingAgentName(Interaction interaction) {
+        UUID agentId = interaction.assignedAgentId();
+        if (agentId == null) {
+            return null;
+        }
+        return agents.findById(agentId).map(AgentJpaEntity::getName).orElse(null);
+    }
+
+    @Operation(summary = "End my interaction",
+            description = "Lets the customer close the conversation, freeing the agent's slot and "
+                    + "pulling the next customer in line.")
+    @PostMapping("/{id}/end")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void end(@PathVariable UUID id) {
+        requireInteraction(id);
+        log.info("Customer ended interaction {}", id);
+        endInteraction.handle(id);
     }
 
     @Operation(summary = "My chat thread", description = "All messages exchanged on this interaction.")

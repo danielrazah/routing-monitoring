@@ -2,6 +2,7 @@ package com.flowpay.routing.monitoring.distribution.infrastructure.web;
 
 import com.flowpay.routing.monitoring.distribution.domain.exception.InteractionNotFoundException;
 import com.flowpay.routing.monitoring.distribution.domain.model.InteractionState;
+import com.flowpay.routing.monitoring.distribution.domain.port.in.EndInteraction;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.entity.AppUserJpaEntity;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.entity.InteractionJpaEntity;
 import com.flowpay.routing.monitoring.distribution.infrastructure.persistence.repository.AppUserJpaRepository;
@@ -13,6 +14,8 @@ import com.flowpay.routing.monitoring.distribution.infrastructure.websocket.Chat
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -37,14 +40,19 @@ import java.util.UUID;
 @RestController
 public class AgentChatController {
 
+    private static final Logger log = LoggerFactory.getLogger(AgentChatController.class);
+
     private final ChatService chat;
     private final InteractionJpaRepository interactions;
     private final AppUserJpaRepository users;
+    private final EndInteraction endInteraction;
 
-    public AgentChatController(ChatService chat, InteractionJpaRepository interactions, AppUserJpaRepository users) {
+    public AgentChatController(ChatService chat, InteractionJpaRepository interactions,
+                              AppUserJpaRepository users, EndInteraction endInteraction) {
         this.chat = chat;
         this.interactions = interactions;
         this.users = users;
+        this.endInteraction = endInteraction;
     }
 
     @Operation(summary = "My open conversations",
@@ -74,6 +82,17 @@ public class AgentChatController {
                                 @AuthenticationPrincipal Jwt jwt) {
         requireOwnership(id, jwt);
         return chat.post(id, ChatService.AGENT, request.body());
+    }
+
+    @Operation(summary = "End one of my conversations",
+            description = "Closes the interaction this agent is serving, freeing its slot and pulling "
+                    + "the next customer in line. An agent may only end interactions assigned to it.")
+    @PostMapping("/api/agent/conversations/{id}/end")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void end(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        requireOwnership(id, jwt);
+        log.info("Agent {} ending interaction {}", jwt.getSubject(), id);
+        endInteraction.handle(id);
     }
 
     private UUID callerAgentId(Jwt jwt) {

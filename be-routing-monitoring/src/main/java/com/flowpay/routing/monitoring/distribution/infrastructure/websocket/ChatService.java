@@ -41,6 +41,7 @@ public class ChatService {
         MessageJpaEntity saved = messages.save(
                 new MessageJpaEntity(UUID.randomUUID(), interactionId, sender, body, Instant.now()));
         MessageResponse response = MessageResponse.from(saved);
+        log.info("Chat message from {} on interaction {}", sender, interactionId);
         try {
             messaging.convertAndSend(CHAT_TOPIC + interactionId, response);
         } catch (RuntimeException e) {

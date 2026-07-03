@@ -58,6 +58,8 @@ public class SecurityConfig {
                         // Creating and ending interactions requires ADMIN.
                         .requestMatchers(HttpMethod.POST, "/api/interactions", "/api/interactions/*/end")
                                 .hasRole("ADMIN")
+                        // Cross-team monitoring and the reset button are ADMIN only.
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Advancing a queue is also open to an AGENT — restricted to its own team
                         // in the controller, from the token's teamId claim.
                         .requestMatchers(HttpMethod.POST, "/api/teams/*/advance-queue")
